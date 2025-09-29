@@ -1,0 +1,240 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  email     String   @unique
+  username  String   @unique
+  password  String?
+  name      String?
+  image     String?
+  bio       String?
+  website   String?
+  location  String?
+  skills    String[]
+  isVerified Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  accounts    Account[]
+  sessions    Session[]
+  services    Service[]
+  orders      Order[]
+  sentOrders  Order[]     @relation("OrderBuyer")
+  messages    Message[]
+  sentMessages Message[]  @relation("MessageSender")
+  reviews     Review[]
+  givenReviews Review[]   @relation("ReviewGiver")
+  requests    Request[]
+  proposals   Proposal[]
+  favorites   Favorite[]
+
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(auto()) @map("_id") @db.ObjectId
+  userId            String  @db.ObjectId
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  sessionToken String   @unique
+  userId       String   @db.ObjectId
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verificationtokens")
+}
+
+model Category {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  name        String    @unique
+  description String?
+  icon        String?
+  slug        String    @unique
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  services Service[]
+  requests Request[]
+
+  @@map("categories")
+}
+
+model Service {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  description String
+  price       Int
+  deliveryDays Int
+  images      String[]
+  tags        String[]
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  userId     String   @db.ObjectId
+  categoryId String   @db.ObjectId
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category   Category  @relation(fields: [categoryId], references: [id])
+  orders     Order[]
+  reviews    Review[]
+  favorites  Favorite[]
+
+  @@map("services")
+}
+
+model Request {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  description String
+  budget      Int?
+  deadline    DateTime?
+  skills      String[]
+  location    String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  userId     String   @db.ObjectId
+  categoryId String   @db.ObjectId
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category   Category   @relation(fields: [categoryId], references: [id])
+  proposals  Proposal[]
+
+  @@map("requests")
+}
+
+model Proposal {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  message     String
+  price       Int
+  deliveryDays Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  requestId String   @db.ObjectId
+  userId    String   @db.ObjectId
+  request   Request @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([requestId, userId])
+  @@map("proposals")
+}
+
+enum OrderStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  DISPUTED
+}
+
+model Order {
+  id          String      @id @default(auto()) @map("_id") @db.ObjectId
+  status      OrderStatus @default(PENDING)
+  totalAmount Int
+  message     String?
+  deadline    DateTime?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  // Relations
+  serviceId String?     @db.ObjectId
+  sellerId  String      @db.ObjectId
+  buyerId   String      @db.ObjectId
+  service   Service? @relation(fields: [serviceId], references: [id])
+  seller    User     @relation(fields: [sellerId], references: [id])
+  buyer     User     @relation("OrderBuyer", fields: [buyerId], references: [id])
+  messages  Message[]
+  reviews   Review[]
+
+  @@map("orders")
+}
+
+model Message {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  content   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  // Relations
+  orderId    String?  @db.ObjectId
+  senderId   String   @db.ObjectId
+  receiverId String   @db.ObjectId
+  order      Order? @relation(fields: [orderId], references: [id])
+  sender     User   @relation("MessageSender", fields: [senderId], references: [id])
+  receiver   User   @relation(fields: [receiverId], references: [id])
+
+  @@map("messages")
+}
+
+model Review {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  rating    Int
+  comment   String?
+  createdAt DateTime @default(now())
+
+  // Relations
+  orderId     String?  @db.ObjectId
+  serviceId   String?  @db.ObjectId
+  reviewerId  String   @db.ObjectId
+  revieweeId  String   @db.ObjectId
+  order       Order?   @relation(fields: [orderId], references: [id])
+  service     Service? @relation(fields: [serviceId], references: [id])
+  reviewer    User     @relation("ReviewGiver", fields: [reviewerId], references: [id])
+  reviewee    User     @relation(fields: [revieweeId], references: [id])
+
+  @@unique([orderId, reviewerId])
+  @@map("reviews")
+}
+
+model Favorite {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  createdAt DateTime @default(now())
+
+  // Relations
+  userId    String   @db.ObjectId
+  serviceId String   @db.ObjectId
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  service   Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, serviceId])
+  @@map("favorites")
+}

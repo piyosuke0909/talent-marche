@@ -1,0 +1,263 @@
+import { NextRequest, NextResponse } from "next/server"
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/auth"
+import { prisma } from "@/lib/db"
+import type { ServiceDetail, ServiceReviewSummary } from "@/types"
+
+interface RouteParams {
+  params: {
+    id: string
+  }
+}
+
+export async function GET(request: NextRequest, { params }: RouteParams) {
+  try {
+    const service = await prisma.service.findUnique({
+      where: { 
+        id: params.id,
+        isActive: true 
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            username: true,
+            name: true,
+            image: true,
+            bio: true,
+            isVerified: true,
+            createdAt: true,
+          }
+        },
+        category: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+          }
+        },
+        reviews: {
+          include: {
+            reviewer: {
+              select: {
+                id: true,
+                username: true,
+                name: true,
+                image: true,
+              }
+            }
+          },
+          orderBy: { createdAt: "desc" },
+          take: 10,
+        },
+        _count: {
+          select: {
+            orders: true,
+            reviews: true,
+            favorites: true,
+          }
+        }
+      }
+    })
+
+    if (!service) {
+      return NextResponse.json(
+        { error: "サービスが見つかりません" },
+        { status: 404 }
+      )
+    }
+
+    // 平均評価を計算
+    const averageRating = service.reviews.length > 0
+      ? service.reviews.reduce((sum, review) => sum + review.rating, 0) / service.reviews.length
+      : 0
+
+    const totalReviews = service.reviews.length
+    const normalizedReviews: ServiceReviewSummary[] = service.reviews.map(review => ({
+      id: review.id,
+      rating: review.rating,
+      comment: review.comment,
+      createdAt: review.createdAt.toISOString(),
+      reviewer: {
+        id: review.reviewer.id,
+        username: review.reviewer.username,
+        name: review.reviewer.name,
+        image: review.reviewer.image,
+      },
+    }))
+
+    const serviceWithRating: ServiceDetail = {
+      id: service.id,
+      title: service.title,
+      description: service.description,
+      price: service.price,
+      images: service.images,
+      deliveryDays: service.deliveryDays,
+      user: {
+        id: service.user.id,
+        username: service.user.username,
+        name: service.user.name,
+        image: service.user.image,
+        bio: service.user.bio,
+        isVerified: service.user.isVerified,
+        createdAt: service.user.createdAt.toISOString(),
+      },
+      category: {
+        id: service.category.id,
+        name: service.category.name,
+        slug: service.category.slug,
+      },
+      averageRating: Math.round(averageRating * 10) / 10,
+      totalReviews,
+      orderCount: service._count.orders,
+      favoriteCount: service._count.favorites,
+      tags: service.tags,
+      isActive: service.isActive,
+      userId: service.userId,
+      categoryId: service.categoryId,
+      createdAt: service.createdAt.toISOString(),
+      updatedAt: service.updatedAt.toISOString(),
+      reviews: normalizedReviews,
+      _count: {
+        orders: service._count.orders,
+        reviews: service._count.reviews,
+        favorites: service._count.favorites,
+      },
+    }
+
+    return NextResponse.json(serviceWithRating)
+
+  } catch (error) {
+    console.error("Service fetch error:", error)
+    return NextResponse.json(
+      { error: "サービスの取得に失敗しました" },
+      { status: 500 }
+    )
+  }
+}
+
+export async function PUT(request: NextRequest, { params }: RouteParams) {
+  try {
+    const session = await getServerSession(authOptions)
+    
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { error: "認証が必要です" },
+        { status: 401 }
+      )
+    }
+
+    // サービスの所有者確認
+    const existingService = await prisma.service.findUnique({
+      where: { id: params.id }
+    })
+
+    if (!existingService) {
+      return NextResponse.json(
+        { error: "サービスが見つかりません" },
+        { status: 404 }
+      )
+    }
+
+    if (existingService.userId !== session.user.id) {
+      return NextResponse.json(
+        { error: "このサービスを編集する権限がありません" },
+        { status: 403 }
+      )
+    }
+
+    const { title, description, price, deliveryDays, categoryId, images, tags, isActive } = await request.json()
+
+    const service = await prisma.service.update({
+      where: { id: params.id },
+      data: {
+        ...(title && { title }),
+        ...(description && { description }),
+        ...(price && { price: parseInt(price) }),
+        ...(deliveryDays && { deliveryDays: parseInt(deliveryDays) }),
+        ...(categoryId && { categoryId }),
+        ...(images && { images }),
+        ...(tags && { tags }),
+        ...(isActive !== undefined && { isActive }),
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            username: true,
+            name: true,
+            image: true,
+          }
+        },
+        category: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+          }
+        },
+      }
+    })
+
+    return NextResponse.json({
+      message: "サービスを更新しました",
+      service
+    })
+
+  } catch (error) {
+    console.error("Service update error:", error)
+    return NextResponse.json(
+      { error: "サービスの更新に失敗しました" },
+      { status: 500 }
+    )
+  }
+}
+
+export async function DELETE(request: NextRequest, { params }: RouteParams) {
+  try {
+    const session = await getServerSession(authOptions)
+    
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { error: "認証が必要です" },
+        { status: 401 }
+      )
+    }
+
+    // サービスの所有者確認
+    const existingService = await prisma.service.findUnique({
+      where: { id: params.id }
+    })
+
+    if (!existingService) {
+      return NextResponse.json(
+        { error: "サービスが見つかりません" },
+        { status: 404 }
+      )
+    }
+
+    if (existingService.userId !== session.user.id) {
+      return NextResponse.json(
+        { error: "このサービスを削除する権限がありません" },
+        { status: 403 }
+      )
+    }
+
+    // 論理削除（isActive = false）
+    await prisma.service.update({
+      where: { id: params.id },
+      data: { isActive: false }
+    })
+
+    return NextResponse.json({
+      message: "サービスを削除しました"
+    })
+
+  } catch (error) {
+    console.error("Service delete error:", error)
+    return NextResponse.json(
+      { error: "サービスの削除に失敗しました" },
+      { status: 500 }
+    )
+  }
+}
