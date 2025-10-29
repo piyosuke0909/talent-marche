@@ -1,20 +1,25 @@
 import { NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
+import { getServerAuthSession } from "@/lib/auth"
 import { prisma } from "@/lib/db"
+
+interface RouteParams {
+  params: Promise<{
+    id: string
+  }>
+}
 
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: RouteParams
 ) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getServerAuthSession()
     
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const orderId = params.id
+    const { id: orderId } = await params
     const body = await request.json()
     const { paymentMethod, amount } = body
 
@@ -73,10 +78,7 @@ export async function POST(
     const updatedOrder = await prisma.order.update({
       where: { id: orderId },
       data: {
-        status: 'PAID',
-        paidAt: new Date(),
-        paymentMethod: paymentMethod,
-        paymentId: paymentResult.paymentId,
+        status: 'IN_PROGRESS',
       },
       include: {
         service: {
@@ -112,7 +114,7 @@ export async function POST(
         orderId: orderId,
         senderId: 'system', // システムメッセージ
         receiverId: order.sellerId,
-        content: `新しい注文が入りました！「${order.service.title}」の作業を開始してください。`,
+        content: `新しい注文が入りました！「${order.service?.title ?? 'サービス'}」の作業を開始してください。`,
         isRead: false,
       }
     })
@@ -161,16 +163,16 @@ async function simulatePayment(paymentMethod: string, amount: number) {
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: RouteParams
 ) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getServerAuthSession()
     
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const orderId = params.id
+    const { id: orderId } = await params
 
     // 注文の支払い状況を取得
     const order = await prisma.order.findUnique({
@@ -179,9 +181,6 @@ export async function GET(
         id: true,
         status: true,
         totalAmount: true,
-        paidAt: true,
-        paymentMethod: true,
-        paymentId: true,
         buyerId: true,
         sellerId: true
       }

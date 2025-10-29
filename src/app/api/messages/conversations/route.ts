@@ -1,131 +1,157 @@
+import { Prisma } from "@prisma/client"
 import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
+import { getServerAuthSession } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 
-export async function GET(_request: NextRequest) {
-  try {
-    const session = await getServerSession(authOptions)
-    
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: "認証が必要です" },
-        { status: 401 }
-      )
-    }
+const DEFAULT_LIMIT = 40
+const MAX_LIMIT = 100
 
-    // ユーザーが関わっている全てのメッセージから、会話相手を抽出
-    const messages = await prisma.message.findMany({
-      where: {
-        OR: [
-          { senderId: session.user.id },
-          { receiverId: session.user.id }
-        ]
-      },
-      include: {
-        sender: {
-          select: {
-            id: true,
-            username: true,
-            name: true,
-            image: true,
-          }
+const messageInclude = {
+  sender: {
+    select: {
+      id: true,
+      username: true,
+      name: true,
+      image: true,
+    },
+  },
+  receiver: {
+    select: {
+      id: true,
+      username: true,
+      name: true,
+      image: true,
+    },
+  },
+  order: {
+    select: {
+      id: true,
+      status: true,
+      service: {
+        select: {
+          id: true,
+          title: true,
         },
-        receiver: {
-          select: {
-            id: true,
-            username: true,
-            name: true,
-            image: true,
-          }
-        },
-        order: {
-          select: {
-            id: true,
-            status: true,
-            service: {
-              select: {
-                id: true,
-                title: true,
-              }
-            }
-          }
-        }
       },
-      orderBy: { createdAt: 'desc' }
-    })
+    },
+  },
+} as const
 
-    // 会話相手ごとに最新のメッセージをグループ化
-    const conversationsMap = new Map()
+type MessageWithRelations = Prisma.MessageGetPayload<{ include: typeof messageInclude }>
 
-    messages.forEach(message => {
-      const otherUserId = message.senderId === session.user.id 
-        ? message.receiverId 
-        : message.senderId
-      
-      const otherUser = message.senderId === session.user.id 
-        ? message.receiver 
-        : message.sender
+function mapConversation(
+  lastMessage: MessageWithRelations,
+  unreadCount: number,
+  viewerId: string,
+) {
+  const isViewerSender = lastMessage.senderId === viewerId
+  const partner = isViewerSender ? lastMessage.receiver : lastMessage.sender
 
-      // まだこのユーザーとの会話が記録されていない場合のみ追加
-      if (!conversationsMap.has(otherUserId)) {
-        const unreadCount = messages.filter(m => 
-          m.senderId === otherUserId && 
-          m.receiverId === session.user.id && 
-          !m.isRead
-        ).length
-
-        conversationsMap.set(otherUserId, {
-          userId: otherUserId,
-          user: otherUser,
-          lastMessage: message,
-          unreadCount,
-          updatedAt: message.createdAt
-        })
-      }
-    })
-
-    // Map を配列に変換し、最新のメッセージ順にソート
-    const conversations = Array.from(conversationsMap.values())
-      .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
-
-    return NextResponse.json({ conversations })
-
-  } catch (error) {
-    console.error("Conversations fetch error:", error)
-    return NextResponse.json(
-      { error: "会話一覧の取得に失敗しました" },
-      { status: 500 }
-    )
+  return {
+    userId: partner.id,
+    user: partner,
+    lastMessage: {
+      id: lastMessage.id,
+      content: lastMessage.content,
+      createdAt: lastMessage.createdAt.toISOString(),
+      isRead: lastMessage.receiverId === viewerId ? true : lastMessage.isRead,
+      senderId: lastMessage.senderId,
+      receiverId: lastMessage.receiverId,
+      order: lastMessage.order
+        ? {
+            id: lastMessage.order.id,
+            status: lastMessage.order.status,
+            service: lastMessage.order.service
+              ? {
+                  id: lastMessage.order.service.id,
+                  title: lastMessage.order.service.title,
+                }
+              : null,
+          }
+        : null,
+    },
+    unreadCount,
+    updatedAt: lastMessage.createdAt.toISOString(),
   }
 }
 
-// 未読メッセージ数を取得
-export async function POST(_request: NextRequest) {
+export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-    
+    const session = await getServerAuthSession()
+
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: "認証が必要です" },
-        { status: 401 }
+      return NextResponse.json({ error: "認証が必要です" }, { status: 401 })
+    }
+
+    const viewerId = session.user.id
+    const { searchParams } = new URL(request.url)
+    const parsedLimit = Number.parseInt(searchParams.get("limit") || "", 10)
+    const take = Number.isNaN(parsedLimit)
+      ? DEFAULT_LIMIT
+      : Math.min(Math.max(parsedLimit, 1), MAX_LIMIT)
+
+    const messages = await prisma.message.findMany({
+      where: {
+        OR: [{ senderId: viewerId }, { receiverId: viewerId }],
+      },
+      orderBy: { createdAt: "desc" },
+      take: take * 3, // grab extra rows to build summaries without additional queries
+      include: messageInclude,
+    })
+
+    const unreadCountByUser = new Map<string, number>()
+    const conversationByUser = new Map<string, MessageWithRelations>()
+
+    for (const message of messages) {
+      const otherUserId = message.senderId === viewerId ? message.receiverId : message.senderId
+
+      if (!conversationByUser.has(otherUserId)) {
+        conversationByUser.set(otherUserId, message)
+      }
+
+      if (message.receiverId === viewerId && !message.isRead) {
+        unreadCountByUser.set(otherUserId, (unreadCountByUser.get(otherUserId) ?? 0) + 1)
+      }
+    }
+
+    const conversations = Array.from(conversationByUser.values())
+      .map((lastMessage) =>
+        mapConversation(
+          lastMessage,
+          unreadCountByUser.get(
+            lastMessage.senderId === viewerId ? lastMessage.receiverId : lastMessage.senderId,
+          ) ?? 0,
+          viewerId,
+        ),
       )
+      .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+      .slice(0, take)
+
+    return NextResponse.json({ conversations })
+  } catch (error) {
+    console.error("Conversations fetch error:", error)
+    return NextResponse.json({ error: "会話一覧の取得に失敗しました" }, { status: 500 })
+  }
+}
+
+export async function POST() {
+  try {
+    const session = await getServerAuthSession()
+
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "認証が必要です" }, { status: 401 })
     }
 
     const unreadCount = await prisma.message.count({
       where: {
         receiverId: session.user.id,
-        isRead: false
-      }
+        isRead: false,
+      },
     })
 
     return NextResponse.json({ unreadCount })
-
   } catch (error) {
     console.error("Unread count fetch error:", error)
-    return NextResponse.json(
-      { error: "未読数の取得に失敗しました" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "未読数の取得に失敗しました" }, { status: 500 })
   }
 }

@@ -1,4 +1,5 @@
-import { NextAuthOptions } from "next-auth"
+import type { NextAuthOptions, Session } from "next-auth"
+import { getServerSession } from "next-auth/next"
 import { PrismaAdapter } from "@next-auth/prisma-adapter"
 import CredentialsProvider from "next-auth/providers/credentials"
 import GoogleProvider from "next-auth/providers/google"
@@ -61,7 +62,7 @@ export const authOptions: NextAuthOptions = {
     signUp: "/auth/signup",
   },
   callbacks: {
-    async signIn({ user, account, profile }) {
+    async signIn() {
       return true
     },
     async jwt({ token, user }) {
@@ -77,4 +78,8 @@ export const authOptions: NextAuthOptions = {
       return session
     },
   },
+}
+
+export async function getServerAuthSession(): Promise<Session | null> {
+  return getServerSession(authOptions) as Promise<Session | null>
 }

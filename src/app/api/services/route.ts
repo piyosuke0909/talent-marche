@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
 import { Prisma } from "@prisma/client"
-import { authOptions } from "@/lib/auth"
+import { getServerAuthSession } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import type { ServiceListItem, ServicesResponse } from "@/types"
 
@@ -123,7 +122,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getServerAuthSession()
     
     if (!session?.user?.id) {
       return NextResponse.json(

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -19,12 +19,7 @@ export default function ServicesPage() {
     sortBy: 'recent'
   })
 
-  useEffect(() => {
-    fetchCategories()
-    fetchServices()
-  }, [filters])
-
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     try {
       const response = await fetch('/api/categories')
       if (response.ok) {
@@ -34,9 +29,9 @@ export default function ServicesPage() {
     } catch (error) {
       console.error('Failed to fetch categories:', error)
     }
-  }
+  }, [])
 
-  const fetchServices = async () => {
+  const fetchServices = useCallback(async () => {
     setLoading(true)
     try {
       const params = new URLSearchParams()
@@ -56,7 +51,15 @@ export default function ServicesPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [filters])
+
+  useEffect(() => {
+    fetchCategories()
+  }, [fetchCategories])
+
+  useEffect(() => {
+    fetchServices()
+  }, [fetchServices])
 
   const handleFilterChange = (key: string, value: string) => {
     setFilters(prev => ({ ...prev, [key]: value }))

@@ -1,32 +1,96 @@
-import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
 import { Prisma } from "@prisma/client"
-import { authOptions } from "@/lib/auth"
+import { NextRequest, NextResponse } from "next/server"
+import { getServerAuthSession } from "@/lib/auth"
 import { prisma } from "@/lib/db"
+
+const DEFAULT_PAGE_SIZE = 50
+const MAX_PAGE_SIZE = 100
+
+const messageInclude = {
+  sender: {
+    select: {
+      id: true,
+      username: true,
+      name: true,
+      image: true,
+    },
+  },
+  receiver: {
+    select: {
+      id: true,
+      username: true,
+      name: true,
+      image: true,
+    },
+  },
+  order: {
+    select: {
+      id: true,
+      status: true,
+      service: {
+        select: {
+          id: true,
+          title: true,
+        },
+      },
+    },
+  },
+} as const
+
+type MessageWithRelations = Prisma.MessageGetPayload<{ include: typeof messageInclude }>
+
+function mapMessage(message: MessageWithRelations, viewerId: string) {
+  return {
+    id: message.id,
+    content: message.content,
+    createdAt: message.createdAt.toISOString(),
+    isRead: message.receiverId === viewerId ? true : message.isRead,
+    senderId: message.senderId,
+    receiverId: message.receiverId,
+    sender: message.sender,
+    receiver: message.receiver,
+    order: message.order
+      ? {
+          id: message.order.id,
+          status: message.order.status,
+          service: message.order.service
+            ? {
+                id: message.order.service.id,
+                title: message.order.service.title,
+              }
+            : null,
+        }
+      : null,
+  }
+}
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-    
+    const session = await getServerAuthSession()
+
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: "認証が必要です" },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: "認証が必要です" }, { status: 401 })
     }
 
+    const viewerId = session.user.id
     const { searchParams } = new URL(request.url)
-    const orderId = searchParams.get("orderId")
     const conversationId = searchParams.get("conversationId")
-    const page = parseInt(searchParams.get("page") || "1")
-    const limit = parseInt(searchParams.get("limit") || "50")
+    const orderId = searchParams.get("orderId")
+    const cursor = searchParams.get("cursor")
+    const parsedLimit = Number.parseInt(searchParams.get("limit") || "", 10)
 
-    const skip = (page - 1) * limit
+    const take = Number.isNaN(parsedLimit)
+      ? DEFAULT_PAGE_SIZE
+      : Math.min(Math.max(parsedLimit, 1), MAX_PAGE_SIZE)
 
     const where: Prisma.MessageWhereInput = {
-      OR: [
-        { senderId: session.user.id },
-        { receiverId: session.user.id }
+      OR: [{ senderId: viewerId }, { receiverId: viewerId }],
+    }
+
+    if (conversationId) {
+      where.OR = [
+        { senderId: viewerId, receiverId: conversationId },
+        { senderId: conversationId, receiverId: viewerId },
       ]
     }
 
@@ -34,200 +98,117 @@ export async function GET(request: NextRequest) {
       where.orderId = orderId
     }
 
-    if (conversationId) {
-      // 特定のユーザーとの会話
-      const otherUserId = conversationId
-      where.OR = [
-        { senderId: session.user.id, receiverId: otherUserId },
-        { senderId: otherUserId, receiverId: session.user.id }
-      ]
+    const queryOptions: Prisma.MessageFindManyArgs = {
+      where,
+      include: messageInclude,
+      orderBy: { createdAt: "desc" },
+      take: take + 1,
     }
 
-    const messages = await prisma.message.findMany({
-      where,
-      include: {
-        sender: {
-          select: {
-            id: true,
-            username: true,
-            name: true,
-            image: true,
-          }
-        },
-        receiver: {
-          select: {
-            id: true,
-            username: true,
-            name: true,
-            image: true,
-          }
-        },
-        order: {
-          select: {
-            id: true,
-            status: true,
-            service: {
-              select: {
-                id: true,
-                title: true,
-              }
-            }
-          }
-        }
-      },
-      orderBy: { createdAt: "asc" },
-      skip,
-      take: limit,
-    })
+    if (cursor) {
+      queryOptions.cursor = { id: cursor }
+      queryOptions.skip = 1
+    }
 
-    // 受信したメッセージを既読にする
-    const unreadMessageIds = messages
-      .filter(msg => msg.receiverId === session.user.id && !msg.isRead)
-      .map(msg => msg.id)
+    const messages = await prisma.message.findMany(queryOptions)
+    const hasMore = messages.length > take
+    const trimmed = hasMore ? messages.slice(0, take) : messages
+    const ordered = trimmed.slice().reverse()
 
-    if (unreadMessageIds.length > 0) {
+    const unreadIds = ordered
+      .filter((message) => message.receiverId === viewerId && !message.isRead)
+      .map((message) => message.id)
+
+    if (unreadIds.length > 0) {
       await prisma.message.updateMany({
-        where: { id: { in: unreadMessageIds } },
-        data: { isRead: true }
+        where: { id: { in: unreadIds } },
+        data: { isRead: true },
       })
     }
 
     return NextResponse.json({
-      messages: messages.map(msg => ({
-        ...msg,
-        isRead: msg.receiverId === session.user.id ? true : msg.isRead
-      }))
+      messages: ordered.map((message) => mapMessage(message, viewerId)),
+      nextCursor: hasMore ? trimmed[trimmed.length - 1].id : null,
     })
-
   } catch (error) {
     console.error("Messages fetch error:", error)
-    return NextResponse.json(
-      { error: "メッセージの取得に失敗しました" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "メッセージの取得に失敗しました" }, { status: 500 })
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-    
+    const session = await getServerAuthSession()
+
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: "認証が必要です" },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: "認証が必要です" }, { status: 401 })
     }
 
+    const viewerId = session.user.id
     const { receiverId, content, orderId } = await request.json()
 
-    if (!receiverId || !content) {
-      return NextResponse.json(
-        { error: "受信者IDとメッセージ内容が必要です" },
-        { status: 400 }
-      )
+    if (!receiverId || typeof receiverId !== "string") {
+      return NextResponse.json({ error: "受信者が指定されていません" }, { status: 400 })
     }
 
-    // 自分自身にメッセージは送れない
-    if (receiverId === session.user.id) {
-      return NextResponse.json(
-        { error: "自分自身にメッセージは送信できません" },
-        { status: 400 }
-      )
+    if (!content || typeof content !== "string" || !content.trim()) {
+      return NextResponse.json({ error: "メッセージ内容を入力してください" }, { status: 400 })
     }
 
-    // 受信者の存在確認
+    if (receiverId === viewerId) {
+      return NextResponse.json({ error: "自分自身には送信できません" }, { status: 400 })
+    }
+
     const receiver = await prisma.user.findUnique({
-      where: { id: receiverId }
+      where: { id: receiverId },
+      select: { id: true },
     })
 
     if (!receiver) {
-      return NextResponse.json(
-        { error: "受信者が見つかりません" },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: "受信者が見つかりません" }, { status: 404 })
     }
 
-    // 注文IDが指定されている場合、注文の関係者かチェック
+    let relatedOrderId: string | null = null
+
     if (orderId) {
       const order = await prisma.order.findUnique({
-        where: { id: orderId }
+        where: { id: orderId },
+        select: { id: true, buyerId: true, sellerId: true },
       })
 
       if (!order) {
-        return NextResponse.json(
-          { error: "注文が見つかりません" },
-          { status: 404 }
-        )
+        return NextResponse.json({ error: "指定された取引が見つかりません" }, { status: 404 })
       }
 
-      if (order.buyerId !== session.user.id && order.sellerId !== session.user.id) {
-        return NextResponse.json(
-          { error: "この注文に関連するメッセージを送信する権限がありません" },
-          { status: 403 }
-        )
+      if (![order.buyerId, order.sellerId].includes(viewerId)) {
+        return NextResponse.json({ error: "この取引に参加していません" }, { status: 403 })
       }
 
-      if (order.buyerId !== receiverId && order.sellerId !== receiverId) {
-        return NextResponse.json(
-          { error: "指定された受信者はこの注文に関連していません" },
-          { status: 400 }
-        )
+      if (![order.buyerId, order.sellerId].includes(receiverId)) {
+        return NextResponse.json({ error: "受信者はこの取引に参加していません" }, { status: 400 })
       }
+
+      relatedOrderId = order.id
     }
 
     const message = await prisma.message.create({
       data: {
-        senderId: session.user.id,
+        senderId: viewerId,
         receiverId,
-        content,
-        orderId: orderId || null,
+        content: content.trim(),
+        orderId: relatedOrderId,
       },
-      include: {
-        sender: {
-          select: {
-            id: true,
-            username: true,
-            name: true,
-            image: true,
-          }
-        },
-        receiver: {
-          select: {
-            id: true,
-            username: true,
-            name: true,
-            image: true,
-          }
-        },
-        order: {
-          select: {
-            id: true,
-            status: true,
-            service: {
-              select: {
-                id: true,
-                title: true,
-              }
-            }
-          }
-        }
-      }
+      include: messageInclude,
     })
 
     return NextResponse.json(
-      { 
-        message: "メッセージを送信しました",
-        data: message 
+      {
+        message: mapMessage(message, viewerId),
       },
-      { status: 201 }
+      { status: 201 },
     )
-
   } catch (error) {
     console.error("Message creation error:", error)
-    return NextResponse.json(
-      { error: "メッセージの送信に失敗しました" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "メッセージの送信に失敗しました" }, { status: 500 })
   }
 }

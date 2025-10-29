@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
+import { getServerAuthSession } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getServerAuthSession()
     
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -46,6 +45,8 @@ export async function GET() {
 
     // パスワードを除外してレスポンス
     const { password: _password, reviews: _reviews, ...profileData } = profile
+    void _password
+    void _reviews
     
     return NextResponse.json({
       ...profileData,
@@ -62,7 +63,7 @@ export async function GET() {
 
 export async function PUT(request: Request) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getServerAuthSession()
     
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -108,6 +109,8 @@ export async function PUT(request: Request) {
 
     // パスワードを除外してレスポンス
     const { password: _password, reviews: _reviews, ...profileData } = updatedProfile
+    void _password
+    void _reviews
 
     return NextResponse.json({
       ...profileData,

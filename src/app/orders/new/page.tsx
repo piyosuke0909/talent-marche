@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
@@ -23,22 +23,12 @@ export default function NewOrderPage() {
     budget: 0
   })
 
-  useEffect(() => {
-    if (status === 'loading') return
-    if (!session) {
-      router.push('/auth/signin')
-      return
-    }
-
+  const fetchService = useCallback(async () => {
     if (!serviceId) {
-      router.push('/services')
       return
     }
 
-    fetchService()
-  }, [session, status, serviceId, router])
-
-  const fetchService = async () => {
+    setLoading(true)
     try {
       const response = await fetch(`/api/services/${serviceId}`)
       if (response.ok) {
@@ -54,7 +44,22 @@ export default function NewOrderPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [serviceId, router])
+
+  useEffect(() => {
+    if (status === 'loading') return
+    if (!session) {
+      router.push('/auth/signin')
+      return
+    }
+
+    if (!serviceId) {
+      router.push('/services')
+      return
+    }
+
+    fetchService()
+  }, [session, status, serviceId, router, fetchService])
 
   const handleOrder = async () => {
     if (!service || !session) return

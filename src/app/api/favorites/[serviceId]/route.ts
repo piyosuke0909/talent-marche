@@ -1,42 +1,47 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { NextRequest, NextResponse } from "next/server"
+import { getServerAuthSession } from "@/lib/auth"
+import { prisma } from "@/lib/db"
 
-// GET関数を正しく定義します
+interface RouteParams {
+  params: {
+    serviceId: string
+  }
+}
+
 export async function GET(
-  request: NextRequest,
-  { params }: { params: { serviceId: string } } // ← ここの型定義が重要！ Promiseではない
+  _request: NextRequest,
+  { params }: { params: Promise<RouteParams["params"]> }
 ) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getServerAuthSession()
 
     if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { serviceId } = params; // paramsからserviceIdを正しく取り出す
+    const resolvedParams = await params
+    const { serviceId } = resolvedParams
 
     if (!serviceId) {
-      return NextResponse.json({ error: "Service ID is required" }, { status: 400 });
+      return NextResponse.json({ error: "Service ID is required" }, { status: 400 })
     }
 
     const favorite = await prisma.favorite.findUnique({
       where: {
         userId_serviceId: {
           userId: session.user.id,
-          serviceId: serviceId,
+          serviceId,
         },
       },
-    });
+    })
 
-    return NextResponse.json({ isFavorite: !!favorite }); // !!favorite で true/false に変換
+    return NextResponse.json({ isFavorite: !!favorite })
 
   } catch (error) {
-    console.error("Error checking favorite status:", error);
+    console.error("Error checking favorite status:", error)
     return NextResponse.json(
       { error: "お気に入りの状態の確認に失敗しました" },
       { status: 500 }
-    );
+    )
   }
 }

@@ -1,17 +1,16 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
+import { getServerAuthSession } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getServerAuthSession()
     
     if (!session?.user?.id) {
       return NextResponse.json(
@@ -20,8 +19,10 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       )
     }
 
+    const { id } = await params
+
     const order = await prisma.order.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         service: {
           select: {
@@ -108,7 +109,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
 export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getServerAuthSession()
     
     if (!session?.user?.id) {
       return NextResponse.json(
@@ -126,9 +127,11 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       )
     }
 
+    const { id } = await params
+
     // 注文の存在確認と権限チェック
     const existingOrder = await prisma.order.findUnique({
-      where: { id: params.id }
+      where: { id }
     })
 
     if (!existingOrder) {
@@ -154,7 +157,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     }
 
     const order = await prisma.order.update({
-      where: { id: params.id },
+      where: { id },
       data: { status },
       include: {
         service: {
@@ -199,7 +202,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getServerAuthSession()
     
     if (!session?.user?.id) {
       return NextResponse.json(
@@ -208,9 +211,11 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       )
     }
 
+    const { id } = await params
+
     // 注文の存在確認と権限チェック
     const existingOrder = await prisma.order.findUnique({
-      where: { id: params.id }
+      where: { id }
     })
 
     if (!existingOrder) {
@@ -236,7 +241,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     }
 
     await prisma.order.update({
-      where: { id: params.id },
+      where: { id },
       data: { status: "CANCELLED" }
     })
 

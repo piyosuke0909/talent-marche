@@ -129,6 +129,7 @@ export interface MessageSummary {
   isRead: boolean
   senderId: string
   receiverId: string
+  order?: MessageOrderSummary | null
 }
 
 export interface ConversationPreview {
@@ -162,6 +163,7 @@ export interface ConversationsResponse {
 
 export interface MessagesResponse {
   messages: ConversationMessage[]
+  nextCursor?: string | null
 }
 
 export interface SearchParams {

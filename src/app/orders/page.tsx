@@ -78,17 +78,22 @@ export default function OrdersPage() {
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
 
+  const currentUserId =
+    session?.user && typeof session.user === 'object' && 'id' in session.user
+      ? (session.user as { id?: string }).id ?? undefined
+      : undefined
+
   useEffect(() => {
     if (status === 'loading') return
-    if (!session?.user?.id) {
+    if (!currentUserId) {
       router.push('/auth/signin?callbackUrl=/orders')
       return
     }
     setLoading(false)
-  }, [session, status, router])
+  }, [currentUserId, status, router])
 
   useEffect(() => {
-    if (!session?.user?.id) return
+    if (!currentUserId) return
 
     const controller = new AbortController()
     const fetchOrders = async () => {
@@ -131,13 +136,13 @@ export default function OrdersPage() {
     fetchOrders()
 
     return () => controller.abort()
-  }, [session?.user?.id, orderType, orderStatus, page])
+  }, [currentUserId, orderType, orderStatus, page])
 
   useEffect(() => {
     setPage(1)
   }, [orderType, orderStatus])
 
-  const userId = session?.user?.id
+  const userId = currentUserId
 
   const heading = useMemo(() => {
     switch (orderType) {
@@ -346,4 +351,3 @@ export default function OrdersPage() {
     </div>
   )
 }
-

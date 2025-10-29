@@ -4,14 +4,13 @@ import Image from 'next/image'
 import { Star, Heart, Clock, User, MessageCircle } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { prisma } from '@/lib/db'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getServerAuthSession } from '@/lib/auth'
 import type { ServiceDetail, ServiceReviewSummary } from '@/types'
 
 interface ServicePageProps {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 async function getService(id: string): Promise<ServiceDetail | null> {
@@ -126,8 +125,9 @@ async function getService(id: string): Promise<ServiceDetail | null> {
 }
 
 export default async function ServicePage({ params }: ServicePageProps) {
-  const session = await getServerSession(authOptions)
-  const service = await getService(params.id)
+  const { id } = await params
+  const session = await getServerAuthSession()
+  const service = await getService(id)
 
   if (!service) {
     notFound()
@@ -167,10 +167,13 @@ export default async function ServicePage({ params }: ServicePageProps) {
                 <div className="p-4 grid grid-cols-4 gap-2">
                   {service.images.slice(1, 5).map((image, index) => (
                     <div key={index} className="aspect-square">
-                      <img 
-                        src={image} 
+                      <Image
+                        src={image}
                         alt={`${service.title} ${index + 2}`}
+                        width={256}
+                        height={256}
                         className="w-full h-full object-cover rounded"
+                        unoptimized
                       />
                     </div>
                   ))}

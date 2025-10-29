@@ -1,28 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getServerAuthSession } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 export async function GET(_request: NextRequest, { params }: RouteParams) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getServerAuthSession()
 
     if (!session?.user?.id) {
       return NextResponse.json({ error: '認証が必要です' }, { status: 401 })
     }
 
-    if (!params.id) {
+    const { id } = await params
+
+    if (!id) {
       return NextResponse.json({ error: 'ユーザーIDが指定されていません' }, { status: 400 })
     }
 
     const user = await prisma.user.findUnique({
-      where: { id: params.id },
+      where: { id },
       select: {
         id: true,
         name: true,
@@ -47,4 +48,3 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
     return NextResponse.json({ error: 'ユーザー情報の取得に失敗しました' }, { status: 500 })
   }
 }
-

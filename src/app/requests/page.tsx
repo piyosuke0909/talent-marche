@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -47,12 +47,7 @@ export default function RequestsPage() {
     sortBy: 'recent'
   })
 
-  useEffect(() => {
-    fetchCategories()
-    fetchRequests()
-  }, [filters])
-
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     try {
       const response = await fetch('/api/categories')
       if (response.ok) {
@@ -62,9 +57,9 @@ export default function RequestsPage() {
     } catch (error) {
       console.error('Failed to fetch categories:', error)
     }
-  }
+  }, [])
 
-  const fetchRequests = async () => {
+  const fetchRequests = useCallback(async () => {
     setLoading(true)
     try {
       const params = new URLSearchParams()
@@ -85,7 +80,15 @@ export default function RequestsPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [filters])
+
+  useEffect(() => {
+    fetchCategories()
+  }, [fetchCategories])
+
+  useEffect(() => {
+    fetchRequests()
+  }, [fetchRequests])
 
   const handleFilterChange = (key: string, value: string) => {
     setFilters(prev => ({ ...prev, [key]: value }))
@@ -264,10 +267,13 @@ export default function RequestsPage() {
                       )}
                       
                       <div className="flex items-center text-sm text-gray-500">
-                        <img
+                        <Image
                           src={request.user.image || '/images/default-avatar.png'}
                           alt={request.user.name}
-                          className="w-6 h-6 rounded-full mr-2"
+                          width={24}
+                          height={24}
+                          className="w-6 h-6 rounded-full mr-2 object-cover"
+                          unoptimized
                         />
                         <span>{request.user.name}</span>
                         {request.location && (

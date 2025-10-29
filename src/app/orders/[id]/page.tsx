@@ -1,24 +1,24 @@
 import { notFound, redirect } from 'next/navigation'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getServerAuthSession } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import OrderDetailClient from '@/components/orders/OrderDetailClient'
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 export default async function OrderDetailPage({ params }: RouteParams) {
-  const session = await getServerSession(authOptions)
+  const { id } = await params
+  const session = await getServerAuthSession()
 
   if (!session?.user?.id) {
-    redirect(`/auth/signin?callbackUrl=/orders/${params.id}`)
+    redirect(`/auth/signin?callbackUrl=/orders/${id}`)
   }
 
   const order = await prisma.order.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: {
       service: {
         select: {
@@ -104,4 +104,3 @@ export default async function OrderDetailPage({ params }: RouteParams) {
     <OrderDetailClient initialOrder={serialisedOrder} currentUserId={session.user.id} />
   )
 }
-

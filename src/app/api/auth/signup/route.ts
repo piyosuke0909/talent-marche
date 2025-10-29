@@ -45,6 +45,7 @@ export async function POST(request: NextRequest) {
 
     // Return user without password
     const { password: _password, ...userWithoutPassword } = user
+    void _password
 
     return NextResponse.json(userWithoutPassword, { status: 201 })
   } catch (error) {

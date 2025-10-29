@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
+import { getServerAuthSession } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getServerAuthSession()
     
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -35,7 +34,7 @@ export async function GET() {
           service: {
             userId: session.user.id
           },
-          status: 'completed'
+          status: 'COMPLETED'
         },
         include: {
           service: true
@@ -48,7 +47,7 @@ export async function GET() {
       })
     ])
 
-    const totalEarnings = orders.reduce((sum, order) => sum + order.service.price, 0)
+    const totalEarnings = orders.reduce((sum, order) => sum + (order.service?.price ?? 0), 0)
 
     return NextResponse.json({
       totalServices,

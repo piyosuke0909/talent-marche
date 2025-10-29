@@ -1,20 +1,20 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
+import { getServerAuthSession } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import type { ServiceDetail, ServiceReviewSummary } from "@/types"
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
+    const { id } = await params
     const service = await prisma.service.findUnique({
       where: { 
-        id: params.id,
+        id,
         isActive: true 
       },
       include: {
@@ -138,7 +138,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
 export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getServerAuthSession()
     
     if (!session?.user?.id) {
       return NextResponse.json(
@@ -148,8 +148,10 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     }
 
     // サービスの所有者確認
+    const { id } = await params
+
     const existingService = await prisma.service.findUnique({
-      where: { id: params.id }
+      where: { id }
     })
 
     if (!existingService) {
@@ -169,7 +171,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     const { title, description, price, deliveryDays, categoryId, images, tags, isActive } = await request.json()
 
     const service = await prisma.service.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         ...(title && { title }),
         ...(description && { description }),
@@ -215,7 +217,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getServerAuthSession()
     
     if (!session?.user?.id) {
       return NextResponse.json(
@@ -225,8 +227,10 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     }
 
     // サービスの所有者確認
+    const { id } = await params
+
     const existingService = await prisma.service.findUnique({
-      where: { id: params.id }
+      where: { id }
     })
 
     if (!existingService) {
@@ -245,7 +249,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
 
     // 論理削除（isActive = false）
     await prisma.service.update({
-      where: { id: params.id },
+      where: { id },
       data: { isActive: false }
     })
 

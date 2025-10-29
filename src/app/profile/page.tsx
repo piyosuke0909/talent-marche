@@ -1,10 +1,11 @@
 'use client'
 
+import Image from 'next/image'
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Edit3, Mail, Calendar, MapPin, Star, User, Briefcase } from 'lucide-react'
+import { Edit3, Mail, Calendar, MapPin, Star, Briefcase } from 'lucide-react'
 
 interface UserProfile {
   id: string

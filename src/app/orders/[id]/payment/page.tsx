@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
@@ -46,22 +46,8 @@ export default function PaymentPage() {
   const [paymentLoading, setPaymentLoading] = useState(false)
   const [paymentMethod, setPaymentMethod] = useState<'credit' | 'bank' | 'paypal'>('credit')
 
-  useEffect(() => {
-    if (status === 'loading') return
-    if (!session) {
-      router.push('/auth/signin')
-      return
-    }
-
-    if (!orderId) {
-      router.push('/orders')
-      return
-    }
-
-    fetchOrder()
-  }, [session, status, orderId, router])
-
-  const fetchOrder = async () => {
+  const fetchOrder = useCallback(async () => {
+    setLoading(true)
     try {
       const response = await fetch(`/api/orders/${orderId}`)
       if (response.ok) {
@@ -81,7 +67,22 @@ export default function PaymentPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [orderId, router])
+
+  useEffect(() => {
+    if (status === 'loading') return
+    if (!session) {
+      router.push('/auth/signin')
+      return
+    }
+
+    if (!orderId) {
+      router.push('/orders')
+      return
+    }
+
+    fetchOrder()
+  }, [session, status, orderId, router, fetchOrder])
 
   const handlePayment = async () => {
     if (!order || !session) return
@@ -101,8 +102,8 @@ export default function PaymentPage() {
       })
 
       if (response.ok) {
-        const result = await response.json()
-        
+        await response.json()
+
         // 決済成功後、注文詳細ページにリダイレクト
         router.push(`/orders/${orderId}?payment=success`)
       } else {
@@ -153,20 +154,26 @@ export default function PaymentPage() {
             <h2 className="text-lg font-semibold mb-4">注文内容</h2>
             
             {order.service.images && order.service.images.length > 0 && (
-              <img
+              <Image
                 src={order.service.images[0]}
                 alt={order.service.title}
+                width={512}
+                height={256}
                 className="w-full h-32 object-cover rounded-lg mb-4"
+                unoptimized
               />
             )}
             
             <h3 className="font-semibold text-lg mb-2">{order.service.title}</h3>
             
             <div className="flex items-center mb-4">
-              <img
+              <Image
                 src={order.seller.image || '/images/default-avatar.svg'}
                 alt={order.seller.name}
-                className="w-8 h-8 rounded-full mr-2"
+                width={32}
+                height={32}
+                className="w-8 h-8 rounded-full mr-2 object-cover"
+                unoptimized
               />
               <span className="text-sm font-medium">{order.seller.name}</span>
             </div>

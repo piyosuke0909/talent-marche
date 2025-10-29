@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -271,10 +272,13 @@ export default function OrderDetailClient({ initialOrder, currentUserId }: Order
               </div>
               <div className="grid gap-6 md:grid-cols-[160px,1fr]">
                 {order.service.images?.[0] ? (
-                  <img
+                  <Image
                     src={order.service.images[0]}
                     alt={order.service.title}
+                    width={640}
+                    height={320}
                     className="h-40 w-full rounded-xl object-cover"
+                    unoptimized
                   />
                 ) : (
                   <div className="flex h-40 w-full items-center justify-center rounded-xl bg-gray-100 text-gray-400">
@@ -363,10 +367,13 @@ export default function OrderDetailClient({ initialOrder, currentUserId }: Order
           <div className="rounded-2xl bg-white p-6 shadow-md">
             <h2 className="text-lg font-semibold text-gray-900">取引相手情報</h2>
             <div className="mt-4 flex items-center gap-4">
-              <img
+              <Image
                 src={counterparty.image || '/images/default-avatar.svg'}
                 alt={counterparty.name || counterparty.username}
+                width={64}
+                height={64}
                 className="h-16 w-16 rounded-full object-cover"
+                unoptimized
               />
               <div>
                 <p className="text-lg font-semibold text-gray-900">{counterparty.name || '未設定'}</p>
@@ -438,4 +445,3 @@ export default function OrderDetailClient({ initialOrder, currentUserId }: Order
     </div>
   )
 }
-

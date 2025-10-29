@@ -12,6 +12,11 @@ export default function Header() {
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
+  const sessionUser =
+    session?.user && typeof session.user === 'object'
+      ? (session.user as { name?: string | null; email?: string | null; image?: string | null })
+      : null
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -56,14 +61,14 @@ export default function Header() {
           
           {status === 'loading' ? (
             <div className="w-8 h-8 bg-gray-200 rounded-full animate-pulse" />
-          ) : session ? (
+          ) : sessionUser ? (
             <div className="relative" ref={dropdownRef}>
               <button
                 onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
                 className="flex items-center space-x-2 p-1 rounded-full hover:bg-gray-100 transition-colors"
               >
                 <Image
-                  src={session.user.image || '/images/default-avatar.svg'}
+                  src={sessionUser.image || '/images/default-avatar.svg'}
                   alt="プロフィール画像"
                   width={40}
                   height={40}
@@ -75,8 +80,8 @@ export default function Header() {
               {isProfileDropdownOpen && (
                 <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
                   <div className="px-4 py-3 border-b border-gray-200">
-                    <p className="text-sm font-medium text-gray-900">{session.user.name}</p>
-                    <p className="text-sm text-gray-600">{session.user.email}</p>
+                    <p className="text-sm font-medium text-gray-900">{sessionUser?.name}</p>
+                    <p className="text-sm text-gray-600">{sessionUser?.email}</p>
                   </div>
                   
                   <div className="py-2">
@@ -165,7 +170,7 @@ export default function Header() {
             <Link href="/messages" className="block text-gray-600 hover:text-gray-900">
               メッセージ
             </Link>
-            {session ? (
+            {sessionUser ? (
               <>
                 <Link href="/dashboard" className="block text-gray-600 hover:text-gray-900">
                   ダッシュボード

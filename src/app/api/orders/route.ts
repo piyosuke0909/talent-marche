@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
-import { Prisma } from "@prisma/client"
-import { authOptions } from "@/lib/auth"
+import { Prisma, OrderStatus } from "@prisma/client"
+import { getServerAuthSession } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getServerAuthSession()
     
     if (!session?.user?.id) {
       return NextResponse.json(
@@ -38,7 +37,10 @@ export async function GET(request: NextRequest) {
     }
 
     if (status) {
-      where.status = status
+      const normalizedStatus = status.toUpperCase() as OrderStatus
+      if ((Object.values(OrderStatus) as string[]).includes(normalizedStatus)) {
+        where.status = normalizedStatus
+      }
     }
 
     const [orders, totalCount] = await Promise.all([
@@ -106,7 +108,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getServerAuthSession()
     
     if (!session?.user?.id) {
       return NextResponse.json(
