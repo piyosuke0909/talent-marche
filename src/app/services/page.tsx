@@ -6,12 +6,22 @@ import Link from 'next/link'
 import Image from 'next/image'
 import type { CategorySummary, ServiceListItem, ServicesResponse } from '@/types'
 
+type SortOption = 'recent' | 'popular' | 'price_low' | 'price_high' | 'rating'
+
+type FiltersState = {
+  search: string
+  category: string
+  minPrice: string
+  maxPrice: string
+  sortBy: SortOption
+}
+
 export default function ServicesPage() {
   const searchParams = useSearchParams()
   const [services, setServices] = useState<ServiceListItem[]>([])
   const [categories, setCategories] = useState<CategorySummary[]>([])
   const [loading, setLoading] = useState(true)
-  const [filters, setFilters] = useState({
+  const [filters, setFilters] = useState<FiltersState>({
     search: searchParams?.get('search') || '',
     category: searchParams?.get('category') || '',
     minPrice: '',
@@ -61,7 +71,7 @@ export default function ServicesPage() {
     fetchServices()
   }, [fetchServices])
 
-  const handleFilterChange = (key: string, value: string) => {
+  const handleFilterChange = <K extends keyof FiltersState>(key: K, value: FiltersState[K]) => {
     setFilters(prev => ({ ...prev, [key]: value }))
   }
 
@@ -110,6 +120,7 @@ export default function ServicesPage() {
                 <div className="flex space-x-2">
                   <input
                     type="number"
+                    min={0}
                     value={filters.minPrice}
                     onChange={(e) => handleFilterChange('minPrice', e.target.value)}
                     placeholder="最低価格"
@@ -118,6 +129,7 @@ export default function ServicesPage() {
                   <span className="self-center">〜</span>
                   <input
                     type="number"
+                    min={0}
                     value={filters.maxPrice}
                     onChange={(e) => handleFilterChange('maxPrice', e.target.value)}
                     placeholder="最高価格"
@@ -132,7 +144,7 @@ export default function ServicesPage() {
                 </label>
                 <select
                   value={filters.sortBy}
-                  onChange={(e) => handleFilterChange('sortBy', e.target.value)}
+                  onChange={(e) => handleFilterChange('sortBy', e.target.value as SortOption)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="recent">新着順</option>

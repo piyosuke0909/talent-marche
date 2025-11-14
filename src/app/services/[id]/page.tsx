@@ -193,24 +193,24 @@ export default async function ServicePage({ params }: ServicePageProps) {
                     <div className="flex items-center space-x-1">
                       <Star className="w-4 h-4 text-yellow-400 fill-current" />
                       <span className="font-medium">{service.averageRating}</span>
-                      <span>({service._count.reviews}件のレビュー)</span>
+                      <span>({service._count.reviews})</span>
                     </div>
                   )}
                   <div className="flex items-center space-x-1">
                     <User className="w-4 h-4" />
-                    <span>{service._count.orders}件の受注実績</span>
+                    <span>{service._count.orders}フォロー</span>
                   </div>
                 </div>
               </div>
 
               <div className="prose max-w-none">
-                <h3 className="text-lg font-semibold mb-2">サービス内容</h3>
+                <h3 className="text-lg font-semibold mb-2">繧ｵ繝ｼ繝薙せ蜀・ｮｹ</h3>
                 <p className="text-gray-700 whitespace-pre-wrap">{service.description}</p>
               </div>
 
               {service.tags.length > 0 && (
                 <div className="mt-6">
-                  <h4 className="font-semibold mb-2">タグ</h4>
+                  <h4 className="font-semibold mb-2">繧ｿ繧ｰ</h4>
                   <div className="flex flex-wrap gap-2">
                     {service.tags.map((tag, index) => (
                       <span 
@@ -228,7 +228,7 @@ export default async function ServicePage({ params }: ServicePageProps) {
             {/* Reviews */}
             {service.reviews.length > 0 && (
               <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-                <h3 className="text-xl font-semibold mb-4">レビュー ({service._count.reviews})</h3>
+                <h3 className="text-xl font-semibold mb-4">繝ｬ繝薙Η繝ｼ ({service._count.reviews})</h3>
                 <div className="space-y-4">
                   {service.reviews.map((review) => (
                     <div key={review.id} className="border-b border-gray-200 pb-4 last:border-b-0">
@@ -286,7 +286,7 @@ export default async function ServicePage({ params }: ServicePageProps) {
           <div className="lg:col-span-1">
             {/* Seller Info */}
             <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-              <h3 className="text-lg font-semibold mb-4">販売者情報</h3>
+              <h3 className="text-lg font-semibold mb-4">雋ｩ螢ｲ閠・ュ蝣ｱ</h3>
               <div className="flex items-center space-x-3 mb-4">
                 <div className="flex-shrink-0">
                   {service.user.image ? (
@@ -324,7 +324,7 @@ export default async function ServicePage({ params }: ServicePageProps) {
               )}
               
               <div className="text-sm text-gray-600">
-                メンバー登録: {new Date(service.user.createdAt).toLocaleDateString('ja-JP')}
+                繝｡繝ｳ繝舌・逋ｻ骭ｲ: {new Date(service.user.createdAt).toLocaleDateString('ja-JP')}
               </div>
             </div>
 
@@ -332,38 +332,38 @@ export default async function ServicePage({ params }: ServicePageProps) {
             <div className="bg-white rounded-lg shadow-md p-6 sticky top-4">
               <div className="text-center mb-4">
                 <div className="text-3xl font-bold text-green-600 mb-2">
-                  ¥{service.price.toLocaleString()}
+                  ﾂ･{service.price.toLocaleString()}
                 </div>
                 <div className="flex items-center justify-center space-x-2 text-sm text-gray-600">
                   <Clock className="w-4 h-4" />
-                  <span>納期: {service.deliveryDays}日</span>
+                  <span>邏肴悄: {service.deliveryDays}譌･</span>
                 </div>
               </div>
 
               <div className="space-y-3">
                 {!isOwner ? (
                   <>
-                    <Link href={`/orders/new?serviceId=${service.id}`}>
+                    <Link href={`/checkout?serviceId=${service.id}`}>
                       <Button className="w-full bg-green-600 hover:bg-green-700">
-                        注文する
+                        豕ｨ譁・☆繧・
                       </Button>
                     </Link>
                     <Link href={`/messages/new?userId=${service.userId}`}>
                       <Button variant="outline" className="w-full">
                         <MessageCircle className="w-4 h-4 mr-2" />
-                        質問する
+                        雉ｪ蝠上☆繧・
                       </Button>
                     </Link>
                   </>
                 ) : (
                   <div className="text-center py-4 text-gray-500">
-                    あなたのサービスです
+                    縺ゅ↑縺溘・繧ｵ繝ｼ繝薙せ縺ｧ縺・
                   </div>
                 )}
                 
                 <button className="w-full flex items-center justify-center space-x-2 text-gray-600 hover:text-red-500 py-2">
                   <Heart className="w-4 h-4" />
-                  <span>お気に入りに追加</span>
+                  <span>縺頑ｰ励↓蜈･繧翫↓霑ｽ蜉</span>
                 </button>
               </div>
             </div>
@@ -373,3 +373,6 @@ export default async function ServicePage({ params }: ServicePageProps) {
     </div>
   )
 }
+
+
+

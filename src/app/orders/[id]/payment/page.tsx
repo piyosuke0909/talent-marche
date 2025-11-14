@@ -7,6 +7,8 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { ArrowLeft, CreditCard, Shield, CheckCircle, Clock, AlertCircle } from 'lucide-react'
 
+type PaymentMethod = 'credit' | 'bank' | 'paypal'
+
 interface Order {
   id: string
   totalAmount: number
@@ -44,7 +46,8 @@ export default function PaymentPage() {
   const [order, setOrder] = useState<Order | null>(null)
   const [loading, setLoading] = useState(true)
   const [paymentLoading, setPaymentLoading] = useState(false)
-  const [paymentMethod, setPaymentMethod] = useState<'credit' | 'bank' | 'paypal'>('credit')
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('credit')
 
   const fetchOrder = useCallback(async () => {
     setLoading(true)
@@ -87,6 +90,7 @@ export default function PaymentPage() {
   const handlePayment = async () => {
     if (!order || !session) return
 
+    setErrorMessage(null)
     setPaymentLoading(true)
     try {
       // 決済処理のシミュレーション
@@ -96,8 +100,7 @@ export default function PaymentPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          paymentMethod: paymentMethod,
-          amount: order.totalAmount
+          paymentMethod,
         }),
       })
 
@@ -107,12 +110,12 @@ export default function PaymentPage() {
         // 決済成功後、注文詳細ページにリダイレクト
         router.push(`/orders/${orderId}?payment=success`)
       } else {
-        const error = await response.json()
-        alert(error.message || '決済に失敗しました')
+        const errorResponse = (await response.json().catch(() => ({}))) as { error?: string }
+        setErrorMessage(errorResponse?.error ?? '決済に失敗しました')
       }
     } catch (error) {
       console.error('Payment failed:', error)
-      alert('決済処理でエラーが発生しました')
+      setErrorMessage('決済処理でエラーが発生しました')
     } finally {
       setPaymentLoading(false)
     }
@@ -209,6 +212,11 @@ export default function PaymentPage() {
           {/* 決済方法 */}
           <div className="bg-white rounded-lg shadow-md p-6">
             <h2 className="text-lg font-semibold mb-4">決済方法</h2>
+            {errorMessage && (
+              <div className="mb-4 rounded-lg border border-rose-200 bg-rose-50 px-4 py-2 text-sm text-rose-700">
+                {errorMessage}
+              </div>
+            )}
             
             <div className="space-y-4 mb-6">
               <div 

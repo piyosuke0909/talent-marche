@@ -2,7 +2,27 @@ import { NextRequest, NextResponse } from "next/server"
 import { Prisma } from "@prisma/client"
 import { getServerAuthSession } from "@/lib/auth"
 import { prisma } from "@/lib/db"
+
 import type { ServiceListItem, ServicesResponse } from "@/types"
+
+const SORT_OPTIONS = ['recent', 'popular', 'price_low', 'price_high', 'rating'] as const
+type SortOption = typeof SORT_OPTIONS[number]
+
+function buildServiceSort(sortBy: SortOption): Prisma.ServiceOrderByWithRelationInput | Prisma.ServiceOrderByWithRelationInput[] {
+  switch (sortBy) {
+    case 'price_low':
+      return [{ price: 'asc' }, { createdAt: 'desc' }]
+    case 'price_high':
+      return [{ price: 'desc' }, { createdAt: 'desc' }]
+    case 'popular':
+      return [{ orders: { _count: 'desc' } }, { createdAt: 'desc' }]
+    case 'rating':
+      return [{ reviews: { _avg: { rating: 'desc' } } }, { createdAt: 'desc' }]
+    default:
+      return [{ createdAt: 'desc' }]
+  }
+}
+
 
 export async function GET(request: NextRequest) {
   try {
@@ -12,6 +32,16 @@ export async function GET(request: NextRequest) {
     const category = searchParams.get("category")
     const search = searchParams.get("search")
     const userId = searchParams.get("userId")
+    const minPriceParam = searchParams.get("minPrice")
+    const maxPriceParam = searchParams.get("maxPrice")
+    const sortByParam = (searchParams.get("sortBy") || "recent").toLowerCase()
+
+    const minPrice = minPriceParam ? Number.parseInt(minPriceParam, 10) : null
+    const maxPrice = maxPriceParam ? Number.parseInt(maxPriceParam, 10) : null
+
+    const sortBy: SortOption = SORT_OPTIONS.includes(sortByParam as SortOption)
+      ? (sortByParam as SortOption)
+      : 'recent'
 
     const skip = (page - 1) * limit
 
@@ -40,6 +70,21 @@ export async function GET(request: NextRequest) {
     if (userId) {
       where.userId = userId
     }
+
+    if ((minPrice !== null && !Number.isNaN(minPrice)) || (maxPrice !== null && !Number.isNaN(maxPrice))) {
+      const priceFilter: Prisma.IntFilter = {}
+      if (minPrice !== null && !Number.isNaN(minPrice)) {
+        priceFilter.gte = minPrice
+      }
+      if (maxPrice !== null && !Number.isNaN(maxPrice)) {
+        priceFilter.lte = maxPrice
+      }
+      if (Object.keys(priceFilter).length > 0) {
+        where.price = priceFilter
+      }
+    }
+
+    const orderBy = buildServiceSort(sortBy)
 
     const [services, totalCount] = await Promise.all([
       prisma.service.findMany({
@@ -73,7 +118,7 @@ export async function GET(request: NextRequest) {
             }
           }
         },
-        orderBy: { createdAt: "desc" },
+        orderBy,
         skip,
         take: limit,
       }),

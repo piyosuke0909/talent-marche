@@ -1,6 +1,9 @@
-import { NextResponse } from "next/server"
+﻿import { NextResponse } from "next/server"
 import { getServerAuthSession } from "@/lib/auth"
 import { prisma } from "@/lib/db"
+
+const PAYMENT_METHODS = ["credit", "bank", "paypal"] as const
+type PaymentMethod = typeof PAYMENT_METHODS[number]
 
 interface RouteParams {
   params: Promise<{
@@ -14,30 +17,29 @@ export async function POST(
 ) {
   try {
     const session = await getServerAuthSession()
-    
+
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
     const { id: orderId } = await params
-    const body = await request.json()
-    const { paymentMethod, amount } = body
+    const body = (await request.json().catch(() => ({}))) as { paymentMethod?: PaymentMethod }
+    const paymentMethod = body.paymentMethod
 
-    if (!paymentMethod || !amount) {
+    if (!paymentMethod || !PAYMENT_METHODS.includes(paymentMethod)) {
       return NextResponse.json(
-        { error: "決済方法と金額は必須です" },
+        { error: "有効な決済方法を指定してください" },
         { status: 400 }
       )
     }
 
-    // 注文の存在確認
     const order = await prisma.order.findUnique({
       where: { id: orderId },
       include: {
         service: true,
         buyer: true,
-        seller: true
-      }
+        seller: true,
+      },
     })
 
     if (!order) {
@@ -47,7 +49,6 @@ export async function POST(
       )
     }
 
-    // 購入者本人かチェック
     if (order.buyerId !== session.user.id) {
       return NextResponse.json(
         { error: "この注文にアクセスする権限がありません" },
@@ -55,17 +56,14 @@ export async function POST(
       )
     }
 
-    // 注文がPENDING状態かチェック
-    if (order.status !== 'PENDING') {
+    if (order.status !== "PENDING") {
       return NextResponse.json(
         { error: "この注文は既に処理されています" },
         { status: 400 }
       )
     }
 
-    // 実際の決済処理はここで行う（今回はシミュレーション）
-    // Stripe, PayPal, 銀行API などを利用
-    const paymentResult = await simulatePayment(paymentMethod, amount)
+    const paymentResult = await simulatePayment(paymentMethod, order.totalAmount)
 
     if (!paymentResult.success) {
       return NextResponse.json(
@@ -74,12 +72,9 @@ export async function POST(
       )
     }
 
-    // 注文状態を更新
     const updatedOrder = await prisma.order.update({
       where: { id: orderId },
-      data: {
-        status: 'IN_PROGRESS',
-      },
+      data: { status: "IN_PROGRESS" },
       include: {
         service: {
           select: {
@@ -87,44 +82,45 @@ export async function POST(
             title: true,
             price: true,
             deliveryDays: true,
-          }
+          },
         },
         seller: {
           select: {
             id: true,
             username: true,
             name: true,
-            image: true
-          }
+            image: true,
+          },
         },
         buyer: {
           select: {
             id: true,
             username: true,
             name: true,
-            image: true
-          }
-        }
-      }
+            image: true,
+          },
+        },
+      },
     })
 
-    // 売り手に通知メッセージを作成
     await prisma.message.create({
       data: {
-        orderId: orderId,
-        senderId: 'system', // システムメッセージ
+        orderId,
+        senderId: session.user.id,
         receiverId: order.sellerId,
-        content: `新しい注文が入りました！「${order.service?.title ?? 'サービス'}」の作業を開始してください。`,
+        content: `購入者が「${order.service?.title ?? "サービス"}」の支払いを完了しました。作業を開始してください。`,
         isRead: false,
-      }
+      },
     })
 
-    return NextResponse.json({
-      message: "決済が完了しました",
-      order: updatedOrder,
-      paymentId: paymentResult.paymentId
-    })
-
+    return NextResponse.json(
+      {
+        message: "決済が完了しました",
+        order: updatedOrder,
+        paymentId: paymentResult.paymentId,
+      },
+      { status: 200 }
+    )
   } catch (error) {
     console.error("Payment processing error:", error)
     return NextResponse.json(
@@ -134,30 +130,24 @@ export async function POST(
   }
 }
 
-// 決済処理のシミュレーション関数
-async function simulatePayment(paymentMethod: string, amount: number) {
-  // 実際のプロダクションでは、ここでStripe、PayPal、銀行APIなどを呼び出す
-  
-  // シミュレーション用の遅延
-  await new Promise(resolve => setTimeout(resolve, 1000))
-  
-  // 成功率90%でシミュレーション（デモ用）
+async function simulatePayment(paymentMethod: PaymentMethod, amount: number) {
+  await new Promise((resolve) => setTimeout(resolve, 1000))
   const isSuccess = Math.random() > 0.1
-  
+
   if (isSuccess) {
     return {
       success: true,
-      paymentId: `pay_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      paymentId: `pay_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`,
       transactionId: `txn_${Date.now()}`,
-      amount: amount,
-      currency: 'JPY',
-      method: paymentMethod
+      amount,
+      currency: "JPY",
+      method: paymentMethod,
     }
-  } else {
-    return {
-      success: false,
-      error: '決済処理中にエラーが発生しました。カード情報を確認してください。'
-    }
+  }
+
+  return {
+    success: false,
+    error: "決済にエラーが発生しました。カード情報を確認してください。",
   }
 }
 
@@ -167,14 +157,13 @@ export async function GET(
 ) {
   try {
     const session = await getServerAuthSession()
-    
+
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
     const { id: orderId } = await params
 
-    // 注文の支払い状況を取得
     const order = await prisma.order.findUnique({
       where: { id: orderId },
       select: {
@@ -182,8 +171,8 @@ export async function GET(
         status: true,
         totalAmount: true,
         buyerId: true,
-        sellerId: true
-      }
+        sellerId: true,
+      },
     })
 
     if (!order) {
@@ -193,7 +182,6 @@ export async function GET(
       )
     }
 
-    // アクセス権限チェック
     if (order.buyerId !== session.user.id && order.sellerId !== session.user.id) {
       return NextResponse.json(
         { error: "この注文にアクセスする権限がありません" },
@@ -202,7 +190,6 @@ export async function GET(
     }
 
     return NextResponse.json(order)
-
   } catch (error) {
     console.error("Payment status fetch error:", error)
     return NextResponse.json(
