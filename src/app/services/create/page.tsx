@@ -26,21 +26,32 @@ export default function CreateServicePage() {
   const [imagePreviews, setImagePreviews] = useState<string[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
+  const [showPayoutModal, setShowPayoutModal] = useState(false)
 
   useEffect(() => {
-    const fetchCategories = async () => {
+    const checkEligibility = async () => {
       try {
-        const response = await fetch('/api/categories')
-        if (response.ok) {
-          const data = await response.json()
+        // Categories
+        const catRes = await fetch('/api/categories')
+        if (catRes.ok) {
+          const data = await catRes.json()
           setCategories(data)
         }
+
+        // Payout Status
+        const statusRes = await fetch('/api/user/payout-status')
+        if (statusRes.ok) {
+          const data = await statusRes.json()
+          if (!data.isPayoutSetup) {
+            setShowPayoutModal(true)
+          }
+        }
       } catch (error) {
-        console.error('Failed to fetch categories:', error)
+        console.error('Failed to fetch initial data:', error)
       }
     }
 
-    fetchCategories()
+    checkEligibility()
   }, [])
 
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -85,18 +96,11 @@ export default function CreateServicePage() {
 
   const handleSubmit = async () => {
     setIsLoading(true)
-    
+
     try {
-      // 画像をBase64に変換してAPIに送信
-      const imageUrls: string[] = []
-      for (const image of images) {
-        const reader = new FileReader()
-        const base64 = await new Promise<string>((resolve) => {
-          reader.onload = () => resolve(reader.result as string)
-          reader.readAsDataURL(image)
-        })
-        imageUrls.push(base64)
-      }
+      // Base64形式の画像をそのまま送信
+      // 注意: データサイズが大きくなるため、本番環境では推奨されません
+      const imageUrls = imagePreviews
 
       const response = await fetch('/api/services', {
         method: 'POST',
@@ -119,7 +123,7 @@ export default function CreateServicePage() {
       }
     } catch (error) {
       console.error('エラーが発生しました:', error)
-      alert('エラーが発生しました')
+      alert('エラーが発生しました: ' + (error instanceof Error ? error.message : '不明なエラー'))
     } finally {
       setIsLoading(false)
     }
@@ -132,169 +136,169 @@ export default function CreateServicePage() {
         <div className="max-w-2xl mx-auto">
           {!showConfirm ? (
             <form onSubmit={handleConfirm}>
-            <div className="bg-white p-6 rounded-lg shadow-md mb-5">
-              <div className="flex items-center mb-4">
-                <label className="font-bold mr-2">出品タイトル</label>
-                <span className="bg-red-600 text-white text-xs px-2 py-1 rounded">必須</span>
-              </div>
-              <div className="relative">
-                <input
-                  type="text"
-                  value={formData.title}
-                  onChange={handleTitleChange}
-                  placeholder="出品タイトルを記入してください"
-                  className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
-                />
-                <span className="absolute right-4 top-3 text-sm text-gray-500">
-                  {titleCount}/80
-                </span>
-              </div>
-            </div>
-
-            <div className="flex gap-5 mb-5">
-              <div className="flex-1 bg-white p-6 rounded-lg shadow-md">
+              <div className="bg-white p-6 rounded-lg shadow-md mb-5">
                 <div className="flex items-center mb-4">
-                  <label className="font-bold mr-2">カテゴリを選択</label>
+                  <label className="font-bold mr-2">出品タイトル</label>
                   <span className="bg-red-600 text-white text-xs px-2 py-1 rounded">必須</span>
                 </div>
-                <select
-                  value={formData.categoryId}
-                  onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
-                  className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
-                >
-                  <option value="">カテゴリを選択してください</option>
-                  {categories.map((category) => (
-                    <option key={category.id} value={category.id}>
-                      {category.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="flex-1 bg-white p-6 rounded-lg shadow-md">
-                <div className="flex items-center mb-4">
-                  <label className="font-bold mr-2">販売価格</label>
-                  <span className="bg-red-600 text-white text-xs px-2 py-1 rounded">必須</span>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={formData.title}
+                    onChange={handleTitleChange}
+                    placeholder="出品タイトルを記入してください"
+                    className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  />
+                  <span className="absolute right-4 top-3 text-sm text-gray-500">
+                    {titleCount}/80
+                  </span>
                 </div>
-                <input
-                  type="number"
-                  value={formData.price}
-                  onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                  placeholder="販売価格を記入してください"
-                  min="1"
-                  className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="bg-white p-6 rounded-lg shadow-md mb-5">
-              <div className="flex items-center mb-4">
-                <label className="font-bold mr-2">出品概要</label>
-                <span className="bg-red-600 text-white text-xs px-2 py-1 rounded">必須</span>
-              </div>
-              <textarea
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                placeholder="出品概要を記入してください"
-                rows={8}
-                className="w-full p-3 border border-gray-300 rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              />
-            </div>
-
-            <div className="flex gap-5 mb-5">
-              <div className="flex-1 bg-white p-6 rounded-lg shadow-md">
-                <div className="flex items-center mb-4">
-                  <label className="font-bold mr-2">納品日数</label>
-                  <span className="bg-gray-400 text-white text-xs px-2 py-1 rounded">任意</span>
-                </div>
-                <input
-                  type="number"
-                  value={formData.deliveryDays}
-                  onChange={(e) => setFormData({ ...formData, deliveryDays: e.target.value })}
-                  placeholder="納品日数を入力（例：7日）"
-                  min="1"
-                  className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-            </div>
-
-            <div className="bg-white p-6 rounded-lg shadow-md mb-5">
-              <div className="flex items-center mb-4">
-                <label className="font-bold mr-2">サービス画像</label>
-                <span className="bg-gray-400 text-white text-xs px-2 py-1 rounded">任意</span>
-                <span className="text-sm text-gray-500 ml-2">（最大4枚まで）</span>
               </div>
 
-              {/* ファイルアップロードエリア */}
-              <div className="space-y-4">
-                {images.length < 4 && (
-                  <div className="relative">
-                    <input
-                      type="file"
-                      multiple
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                    />
-                    <div className="flex items-center p-4 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-gray-400 bg-gray-50">
-                      <svg className="w-8 h-8 text-gray-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
-                      </svg>
-                      <div>
-                        <p className="text-gray-600 font-medium">ファイルをアップロード</p>
-                        <p className="text-sm text-gray-500">JPG, PNG, GIF形式（{4 - images.length}枚まで追加可能）</p>
-                      </div>
-                    </div>
+              <div className="flex gap-5 mb-5">
+                <div className="flex-1 bg-white p-6 rounded-lg shadow-md">
+                  <div className="flex items-center mb-4">
+                    <label className="font-bold mr-2">カテゴリを選択</label>
+                    <span className="bg-red-600 text-white text-xs px-2 py-1 rounded">必須</span>
                   </div>
-                )}
+                  <select
+                    value={formData.categoryId}
+                    onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
+                    className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  >
+                    <option value="">カテゴリを選択してください</option>
+                    {categories.map((category) => (
+                      <option key={category.id} value={category.id}>
+                        {category.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex-1 bg-white p-6 rounded-lg shadow-md">
+                  <div className="flex items-center mb-4">
+                    <label className="font-bold mr-2">販売価格</label>
+                    <span className="bg-red-600 text-white text-xs px-2 py-1 rounded">必須</span>
+                  </div>
+                  <input
+                    type="number"
+                    value={formData.price}
+                    onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                    placeholder="販売価格を記入してください"
+                    min="1"
+                    className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  />
+                </div>
+              </div>
 
-                {/* 画像プレビュー */}
-                {imagePreviews.length > 0 && (
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {imagePreviews.map((preview, index) => (
-                      <div key={index} className="relative">
-                        <Image
-                          src={preview}
-                          alt="プレビュー画像"
-                          width={200}
-                          height={120}
-                          className="h-24 w-full rounded border object-cover"
-                          unoptimized
-                        />
-                        <button
-                          type="button"
-                          onClick={() => removeImage(index)}
-                          className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-600"
-                        >
-                          ×
-                        </button>
-                        <div className="absolute bottom-1 left-1 bg-black bg-opacity-50 text-white text-xs px-1 rounded">
-                          {index + 1}
+              <div className="bg-white p-6 rounded-lg shadow-md mb-5">
+                <div className="flex items-center mb-4">
+                  <label className="font-bold mr-2">出品概要</label>
+                  <span className="bg-red-600 text-white text-xs px-2 py-1 rounded">必須</span>
+                </div>
+                <textarea
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  placeholder="出品概要を記入してください"
+                  rows={8}
+                  className="w-full p-3 border border-gray-300 rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
+
+              <div className="flex gap-5 mb-5">
+                <div className="flex-1 bg-white p-6 rounded-lg shadow-md">
+                  <div className="flex items-center mb-4">
+                    <label className="font-bold mr-2">納品日数</label>
+                    <span className="bg-gray-400 text-white text-xs px-2 py-1 rounded">任意</span>
+                  </div>
+                  <input
+                    type="number"
+                    value={formData.deliveryDays}
+                    onChange={(e) => setFormData({ ...formData, deliveryDays: e.target.value })}
+                    placeholder="納品日数を入力（例：7日）"
+                    min="1"
+                    className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+
+              <div className="bg-white p-6 rounded-lg shadow-md mb-5">
+                <div className="flex items-center mb-4">
+                  <label className="font-bold mr-2">サービス画像</label>
+                  <span className="bg-gray-400 text-white text-xs px-2 py-1 rounded">任意</span>
+                  <span className="text-sm text-gray-500 ml-2">（最大4枚まで）</span>
+                </div>
+
+                {/* ファイルアップロードエリア */}
+                <div className="space-y-4">
+                  {images.length < 4 && (
+                    <div className="relative">
+                      <input
+                        type="file"
+                        multiple
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                      />
+                      <div className="flex items-center p-4 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-gray-400 bg-gray-50">
+                        <svg className="w-8 h-8 text-gray-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                        <div>
+                          <p className="text-gray-600 font-medium">ファイルをアップロード</p>
+                          <p className="text-sm text-gray-500">JPG, PNG, GIF形式（{4 - images.length}枚まで追加可能）</p>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
+                    </div>
+                  )}
 
-            <div className="text-center my-16">
-              <button
-                type="submit"
-                className="w-full p-5 bg-black text-white text-xl font-bold rounded-lg shadow-md hover:bg-gray-800 transition-colors"
-              >
-                確認画面に進む
-              </button>
-            </div>
+                  {/* 画像プレビュー */}
+                  {imagePreviews.length > 0 && (
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      {imagePreviews.map((preview, index) => (
+                        <div key={index} className="relative">
+                          <Image
+                            src={preview}
+                            alt="プレビュー画像"
+                            width={200}
+                            height={120}
+                            className="h-24 w-full rounded border object-cover"
+                            unoptimized
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeImage(index)}
+                            className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-600"
+                          >
+                            ×
+                          </button>
+                          <div className="absolute bottom-1 left-1 bg-black bg-opacity-50 text-white text-xs px-1 rounded">
+                            {index + 1}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="text-center my-16">
+                <button
+                  type="submit"
+                  className="w-full p-5 bg-black text-white text-xl font-bold rounded-lg shadow-md hover:bg-gray-800 transition-colors"
+                >
+                  確認画面に進む
+                </button>
+              </div>
             </form>
           ) : (
             /* 確認画面 */
             <div className="bg-white p-8 rounded-lg shadow-md">
               <h2 className="text-2xl font-bold mb-6 text-center">出品内容の確認</h2>
-              
+
               <div className="space-y-6">
                 <div>
                   <h3 className="font-bold text-lg mb-2">サービス名</h3>
@@ -363,7 +367,7 @@ export default function CreateServicePage() {
           )}
         </div>
       </main>
-      
+
       <footer className="text-right max-w-6xl mx-auto px-4 pb-5">
         <div className="flex items-center justify-end gap-2">
           <input type="checkbox" className="mr-1" />
@@ -371,6 +375,36 @@ export default function CreateServicePage() {
           <a href="#" className="text-blue-500 ml-2">ヘルプはこちら≫</a>
         </div>
       </footer>
+
+      {/* Payout Requirement Modal */}
+      {showPayoutModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl max-w-md w-full p-6 shadow-2xl">
+            <h2 className="text-xl font-bold text-gray-900 mb-4 text-center">
+              振込先口座の登録が必要です
+            </h2>
+            <p className="text-gray-600 mb-6 text-center leading-relaxed">
+              サービスを出品して売上を受け取るには、<br />
+              事前に「自動振込用の口座登録」を完了する必要があります。<br />
+              <span className="text-xs text-gray-500 mt-2 block">※登録は決済代行会社PAY.JPを通じて行われます。</span>
+            </p>
+            <div className="flex flex-col gap-3">
+              <button
+                onClick={() => router.push('/dashboard/payout-settings')}
+                className="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition"
+              >
+                口座登録へ進む
+              </button>
+              <button
+                onClick={() => router.push('/')}
+                className="w-full bg-gray-100 text-gray-600 font-bold py-3 rounded-lg hover:bg-gray-200 transition"
+              >
+                トップページへ戻る
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

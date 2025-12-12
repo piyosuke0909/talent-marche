@@ -1,12 +1,15 @@
+
 import { NextRequest, NextResponse } from "next/server"
 import { Prisma, OrderStatus } from "@prisma/client"
 import { getServerAuthSession } from "@/lib/auth"
 import { prisma } from "@/lib/db"
+import { createNotification } from "@/lib/notifications"
+
 
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerAuthSession()
-    
+
     if (!session?.user?.id) {
       return NextResponse.json(
         { error: "認証が必要です" },
@@ -64,6 +67,7 @@ export async function GET(request: NextRequest) {
             }
           },
           buyer: {
+
             select: {
               id: true,
               username: true,
@@ -109,7 +113,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerAuthSession()
-    
+
     if (!session?.user?.id) {
       return NextResponse.json(
         { error: "認証が必要です" },
@@ -128,9 +132,9 @@ export async function POST(request: NextRequest) {
 
     // サービスの存在確認
     const service = await prisma.service.findUnique({
-      where: { 
+      where: {
         id: serviceId,
-        isActive: true 
+        isActive: true
       },
       include: {
         user: {
@@ -138,6 +142,7 @@ export async function POST(request: NextRequest) {
             id: true,
             username: true,
             name: true,
+            email: true,
           }
         }
       }
@@ -191,31 +196,25 @@ export async function POST(request: NextRequest) {
             id: true,
             username: true,
             name: true,
-            image: true,
           }
         }
       }
     })
 
-    // 初期メッセージを送信（オプション）
-    if (message) {
-      await prisma.message.create({
-        data: {
-          orderId: order.id,
-          senderId: session.user.id,
-          receiverId: service.userId,
-          content: message,
-        }
+    // Notify Seller
+    try {
+      await createNotification({
+        userId: service.userId,
+        title: '商品が購入されました',
+        message: `${session.user.name || session.user.username || '購入者'}さんが「${service.title}」を購入しました。`,
+        type: 'ORDER',
+        link: `/orders/${order.id}`
       })
+    } catch (e) {
+      console.error('Notification failed', e)
     }
 
-    return NextResponse.json(
-      { 
-        message: "注文を作成しました",
-        order 
-      },
-      { status: 201 }
-    )
+    return NextResponse.json(order, { status: 201 })
 
   } catch (error) {
     console.error("Order creation error:", error)

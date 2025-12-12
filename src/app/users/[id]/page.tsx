@@ -151,20 +151,20 @@ export default async function PublicProfilePage({ params }: PageProps) {
         </div>
 
         <div className="space-y-4">
-          <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-            <h3 className="text-sm font-semibold text-gray-900">実績</h3>
-            <dl className="mt-4 space-y-3">
-              <div className="flex items-center justify-between text-sm text-gray-600">
-                <dt>出品サービス</dt>
-                <dd className="font-semibold text-gray-900">{user._count.services}件</dd>
+          <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+            <h3 className="text-lg font-bold text-gray-900 mb-4">実績</h3>
+            <dl className="space-y-6">
+              <div className="flex items-center justify-between">
+                <dt className="text-base text-gray-600">出品サービス</dt>
+                <dd className="text-xl font-bold text-gray-900">{user._count.services}件</dd>
               </div>
-              <div className="flex items-center justify-between text-sm text-gray-600">
-                <dt>取引回数</dt>
-                <dd className="font-semibold text-gray-900">{user._count.orders}件</dd>
+              <div className="flex items-center justify-between">
+                <dt className="text-base text-gray-600">取引回数</dt>
+                <dd className="text-xl font-bold text-gray-900">{user._count.orders}件</dd>
               </div>
-              <div className="flex items-center justify-between text-sm text-gray-600">
-                <dt>レビュー</dt>
-                <dd className="font-semibold text-gray-900">
+              <div className="flex items-center justify-between">
+                <dt className="text-base text-gray-600">レビュー</dt>
+                <dd className="text-xl font-bold text-gray-900">
                   {user._count.reviews}件 / 平均 {profile.averageRating.toFixed(1)} ★
                 </dd>
               </div>

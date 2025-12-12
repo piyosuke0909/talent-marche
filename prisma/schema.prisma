@@ -19,6 +19,11 @@ model User {
   location  String?
   skills    String[]
   isVerified Boolean @default(false)
+  role       String  @default("USER") // USER, ADMIN
+  isBanned   Boolean @default(false)
+  identityVerified Boolean @default(false)
+  payjpTenantId String? // PAY.JP Tenant ID
+  balance    Int     @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -35,8 +40,25 @@ model User {
   requests    Request[]
   proposals   Proposal[]
   favorites   Favorite[]
+  payouts     Payout[]
+  notifications Notification[]
 
   @@map("users")
+}
+
+model Notification {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  type      String   @default("INFO") // INFO, SUCCESS, WARNING, ERROR, ORDER, MESSAGE
+  title     String
+  message   String
+  link      String?
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
 }
 
 model Account {
@@ -77,6 +99,21 @@ model VerificationToken {
 
   @@unique([identifier, token])
   @@map("verificationtokens")
+}
+
+model Payout {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  amount    Int
+  status    String   @default("PENDING") // PENDING, PROCESSED, FAILED
+  bankInfo  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("payouts")
 }
 
 model Category {
@@ -170,6 +207,8 @@ model Order {
   id          String      @id @default(auto()) @map("_id") @db.ObjectId
   status      OrderStatus @default(PENDING)
   totalAmount Int
+  paymentId   String? // PAY.JP Charge ID
+  isTenantPayment Boolean @default(false)
   message     String?
   deadline    DateTime?
   createdAt   DateTime    @default(now())

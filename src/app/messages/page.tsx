@@ -87,13 +87,13 @@ export default function MessagesPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-10">
+    <div className="container mx-auto px-4 py-10 dark:text-gray-100">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <MessageCircle className="h-7 w-7 text-blue-500" />
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">メッセージ</h1>
-            <p className="text-sm text-gray-500">取引相手とのやり取りを確認できます</p>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">メッセージ</h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400">取引相手とのやり取りを確認できます</p>
           </div>
         </div>
         <Link
@@ -106,35 +106,35 @@ export default function MessagesPage() {
       </div>
 
       {error && (
-        <div className="mb-6 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+        <div className="mb-6 rounded-2xl border border-rose-200 bg-rose-50 dark:bg-rose-900/30 p-4 text-sm text-rose-700 dark:text-rose-300">
           {error}
         </div>
       )}
 
       {conversations.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-gray-200 bg-white p-12 text-center">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-100 text-blue-500">
+        <div className="rounded-2xl border border-dashed border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-12 text-center transition-colors duration-200">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-500">
             <MessageCircle className="h-7 w-7" />
           </div>
-          <h2 className="text-lg font-semibold text-gray-900">まだメッセージはありません</h2>
-          <p className="mt-2 text-sm text-gray-500">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">まだメッセージはありません</h2>
+          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
             サービスを依頼するか、プロフィールから「メッセージを送る」でやり取りを始めましょう。
           </p>
           <Link
             href="/services"
-            className="mt-6 inline-flex items-center justify-center rounded-full border border-blue-500 px-6 py-2 text-sm font-semibold text-blue-600 hover:bg-blue-50"
+            className="mt-6 inline-flex items-center justify-center rounded-full border border-blue-500 px-6 py-2 text-sm font-semibold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20"
           >
             サービスを探す
           </Link>
         </div>
       ) : (
-        <div className="divide-y divide-gray-100 rounded-2xl border border-gray-100 bg-white shadow-sm">
+        <div className="divide-y divide-gray-100 dark:divide-gray-700 rounded-2xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm transition-colors duration-200">
           {conversations.map((conversation) => (
             <button
               key={conversation.userId}
               type="button"
               onClick={() => router.push(`/messages/${conversation.userId}`)}
-              className="flex w-full items-center gap-4 px-6 py-4 text-left transition hover:bg-gray-50"
+              className="flex w-full items-center gap-4 px-6 py-4 text-left transition hover:bg-gray-50 dark:hover:bg-gray-700"
             >
               <div className="relative h-14 w-14 flex-shrink-0">
                 <Image
@@ -152,16 +152,16 @@ export default function MessagesPage() {
               </div>
               <div className="flex min-w-0 flex-1 flex-col gap-1">
                 <div className="flex items-center justify-between gap-3">
-                  <p className="truncate text-sm font-semibold text-gray-900">
+                  <p className="truncate text-sm font-semibold text-gray-900 dark:text-white">
                     {conversation.user.name || conversation.user.username}
                   </p>
                   {conversation.lastMessage && (
-                    <span className="flex-shrink-0 text-xs text-gray-400">
+                    <span className="flex-shrink-0 text-xs text-gray-400 dark:text-gray-500">
                       {formatTimestamp(conversation.lastMessage.createdAt)}
                     </span>
                   )}
                 </div>
-                <p className="truncate text-sm text-gray-600">
+                <p className="truncate text-sm text-gray-600 dark:text-gray-300">
                   {conversation.lastMessage ? conversation.lastMessage.content : 'まだメッセージがありません'}
                 </p>
               </div>

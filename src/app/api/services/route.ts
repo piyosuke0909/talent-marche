@@ -17,7 +17,9 @@ function buildServiceSort(sortBy: SortOption): Prisma.ServiceOrderByWithRelation
     case 'popular':
       return [{ orders: { _count: 'desc' } }, { createdAt: 'desc' }]
     case 'rating':
-      return [{ reviews: { _avg: { rating: 'desc' } } }, { createdAt: 'desc' }]
+      // Prisma doesn't support sorting by average aggregation directly in orderBy yet.
+      // Fallback to sorting by review count for now.
+      return [{ reviews: { _count: 'desc' } }, { createdAt: 'desc' }]
     default:
       return [{ createdAt: 'desc' }]
   }
@@ -168,7 +170,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerAuthSession()
-    
+
     if (!session?.user?.id) {
       return NextResponse.json(
         { error: "認証が必要です" },
@@ -228,9 +230,9 @@ export async function POST(request: NextRequest) {
     })
 
     return NextResponse.json(
-      { 
+      {
         message: "サービスを出品しました",
-        service 
+        service
       },
       { status: 201 }
     )

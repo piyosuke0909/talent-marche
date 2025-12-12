@@ -15,9 +15,9 @@ interface ServicePageProps {
 
 async function getService(id: string): Promise<ServiceDetail | null> {
   const service = await prisma.service.findUnique({
-    where: { 
+    where: {
       id,
-      isActive: true 
+      isActive: true
     },
     include: {
       user: {
@@ -136,13 +136,13 @@ export default async function ServicePage({ params }: ServicePageProps) {
   const isOwner = session?.user?.id === service.userId
 
   return (
-    <div className="bg-gray-50 min-h-screen">
+    <div className="bg-gray-50 dark:bg-gray-950 min-h-screen transition-colors duration-200">
       <div className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2">
             {/* Service Images */}
-            <div className="bg-white rounded-lg shadow-md overflow-hidden mb-6">
+            <div className="bg-white dark:bg-gray-900 rounded-lg shadow-md overflow-hidden mb-6">
               {service.images.length > 0 ? (
                 <div className="relative aspect-video">
                   <Image
@@ -155,13 +155,13 @@ export default async function ServicePage({ params }: ServicePageProps) {
                   />
                 </div>
               ) : (
-                <div className="aspect-video bg-gray-200 flex items-center justify-center">
+                <div className="aspect-video bg-gray-200 dark:bg-gray-800 flex items-center justify-center">
                   <svg className="w-24 h-24 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M4 4h16v16H4V4zm2 2v12h12V6H6zm1 1h10v10H7V7zm1 1v8h8V8H8z"/>
+                    <path d="M4 4h16v16H4V4zm2 2v12h12V6H6zm1 1h10v10H7V7zm1 1v8h8V8H8z" />
                   </svg>
                 </div>
               )}
-              
+
               {/* Additional Images */}
               {service.images.length > 1 && (
                 <div className="p-4 grid grid-cols-4 gap-2">
@@ -182,11 +182,11 @@ export default async function ServicePage({ params }: ServicePageProps) {
             </div>
 
             {/* Service Details */}
-            <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+            <div className="bg-white dark:bg-gray-900 rounded-lg shadow-md p-6 mb-6 transition-colors duration-200">
               <div className="mb-4">
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">{service.title}</h1>
-                <div className="flex items-center space-x-4 text-sm text-gray-600">
-                  <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2 break-words">{service.title}</h1>
+                <div className="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-300">
+                  <span className="bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-200 px-2 py-1 rounded-full">
                     {service.category.name}
                   </span>
                   {service.averageRating > 0 && (
@@ -203,19 +203,19 @@ export default async function ServicePage({ params }: ServicePageProps) {
                 </div>
               </div>
 
-              <div className="prose max-w-none">
-                <h3 className="text-lg font-semibold mb-2">繧ｵ繝ｼ繝薙せ蜀・ｮｹ</h3>
-                <p className="text-gray-700 whitespace-pre-wrap">{service.description}</p>
+              <div className="prose dark:prose-invert max-w-none">
+                <h3 className="text-lg font-semibold mb-2 text-gray-900 dark:text-white">サービス概要</h3>
+                <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap break-words">{service.description}</p>
               </div>
 
               {service.tags.length > 0 && (
                 <div className="mt-6">
-                  <h4 className="font-semibold mb-2">繧ｿ繧ｰ</h4>
+                  <h4 className="font-semibold mb-2 text-gray-900 dark:text-white">タグ</h4>
                   <div className="flex flex-wrap gap-2">
                     {service.tags.map((tag, index) => (
-                      <span 
+                      <span
                         key={index}
-                        className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm"
+                        className="bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 px-3 py-1 rounded-full text-sm"
                       >
                         {tag}
                       </span>
@@ -227,11 +227,11 @@ export default async function ServicePage({ params }: ServicePageProps) {
 
             {/* Reviews */}
             {service.reviews.length > 0 && (
-              <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-                <h3 className="text-xl font-semibold mb-4">繝ｬ繝薙Η繝ｼ ({service._count.reviews})</h3>
+              <div className="bg-white dark:bg-gray-900 rounded-lg shadow-md p-6 mb-6 transition-colors duration-200">
+                <h3 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">レビュー ({service._count.reviews})</h3>
                 <div className="space-y-4">
                   {service.reviews.map((review) => (
-                    <div key={review.id} className="border-b border-gray-200 pb-4 last:border-b-0">
+                    <div key={review.id} className="border-b border-gray-200 dark:border-gray-800 pb-4 last:border-b-0">
                       <div className="flex items-start space-x-3">
                         <div className="flex-shrink-0">
                           {review.reviewer.image ? (
@@ -244,34 +244,33 @@ export default async function ServicePage({ params }: ServicePageProps) {
                               unoptimized
                             />
                           ) : (
-                            <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
-                              <User className="w-6 h-6 text-gray-600" />
+                            <div className="w-10 h-10 bg-gray-300 dark:bg-gray-700 rounded-full flex items-center justify-center">
+                              <User className="w-6 h-6 text-gray-600 dark:text-gray-400" />
                             </div>
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center space-x-2 mb-1">
-                            <span className="font-medium text-gray-900">
+                            <span className="font-medium text-gray-900 dark:text-white">
                               {review.reviewer.name || review.reviewer.username}
                             </span>
                             <div className="flex items-center">
                               {[...Array(5)].map((_, i) => (
                                 <Star
                                   key={i}
-                                  className={`w-4 h-4 ${
-                                    i < review.rating 
-                                      ? 'text-yellow-400 fill-current' 
-                                      : 'text-gray-300'
-                                  }`}
+                                  className={`w-4 h-4 ${i < review.rating
+                                      ? 'text-yellow-400 fill-current'
+                                      : 'text-gray-300 dark:text-gray-600'
+                                    }`}
                                 />
                               ))}
                             </div>
-                            <span className="text-sm text-gray-500">
+                            <span className="text-sm text-gray-500 dark:text-gray-400">
                               {new Date(review.createdAt).toLocaleDateString('ja-JP')}
                             </span>
                           </div>
                           {review.comment && (
-                            <p className="text-gray-700 text-sm">{review.comment}</p>
+                            <p className="text-gray-700 dark:text-gray-300 text-sm">{review.comment}</p>
                           )}
                         </div>
                       </div>
@@ -285,8 +284,8 @@ export default async function ServicePage({ params }: ServicePageProps) {
           {/* Sidebar */}
           <div className="lg:col-span-1">
             {/* Seller Info */}
-            <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-              <h3 className="text-lg font-semibold mb-4">雋ｩ螢ｲ閠・ュ蝣ｱ</h3>
+            <div className="bg-white dark:bg-gray-900 rounded-lg shadow-md p-6 mb-6 transition-colors duration-200">
+              <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">販売者情報</h3>
               <div className="flex items-center space-x-3 mb-4">
                 <div className="flex-shrink-0">
                   {service.user.image ? (
@@ -299,14 +298,14 @@ export default async function ServicePage({ params }: ServicePageProps) {
                       unoptimized
                     />
                   ) : (
-                    <div className="w-12 h-12 bg-gray-300 rounded-full flex items-center justify-center">
-                      <User className="w-8 h-8 text-gray-600" />
+                    <div className="w-12 h-12 bg-gray-300 dark:bg-gray-700 rounded-full flex items-center justify-center">
+                      <User className="w-8 h-8 text-gray-600 dark:text-gray-400" />
                     </div>
                   )}
                 </div>
                 <div>
                   <div className="flex items-center space-x-2">
-                    <span className="font-medium text-gray-900">
+                    <span className="font-medium text-gray-900 dark:text-white">
                       {service.user.name || service.user.username}
                     </span>
                     {service.user.isVerified && (
@@ -315,28 +314,28 @@ export default async function ServicePage({ params }: ServicePageProps) {
                       </svg>
                     )}
                   </div>
-                  <span className="text-sm text-gray-500">@{service.user.username}</span>
+                  <span className="text-sm text-gray-500 dark:text-gray-400">@{service.user.username}</span>
                 </div>
               </div>
-              
+
               {service.user.bio && (
-                <p className="text-gray-700 text-sm mb-4">{service.user.bio}</p>
+                <p className="text-gray-700 dark:text-gray-300 text-sm mb-4">{service.user.bio}</p>
               )}
-              
-              <div className="text-sm text-gray-600">
-                繝｡繝ｳ繝舌・逋ｻ骭ｲ: {new Date(service.user.createdAt).toLocaleDateString('ja-JP')}
+
+              <div className="text-sm text-gray-600 dark:text-gray-400">
+                メンバー登録日: {new Date(service.user.createdAt).toLocaleDateString('ja-JP')}
               </div>
             </div>
 
             {/* Order Card */}
-            <div className="bg-white rounded-lg shadow-md p-6 sticky top-4">
+            <div className="bg-white dark:bg-gray-900 rounded-lg shadow-md p-6 sticky top-4 transition-colors duration-200">
               <div className="text-center mb-4">
-                <div className="text-3xl font-bold text-green-600 mb-2">
-                  ﾂ･{service.price.toLocaleString()}
+                <div className="text-3xl font-bold text-green-600 dark:text-green-400 mb-2">
+                  ¥{service.price.toLocaleString()}
                 </div>
-                <div className="flex items-center justify-center space-x-2 text-sm text-gray-600">
+                <div className="flex items-center justify-center space-x-2 text-sm text-gray-600 dark:text-gray-300">
                   <Clock className="w-4 h-4" />
-                  <span>邏肴悄: {service.deliveryDays}譌･</span>
+                  <span>納期: {service.deliveryDays}日</span>
                 </div>
               </div>
 
@@ -344,26 +343,26 @@ export default async function ServicePage({ params }: ServicePageProps) {
                 {!isOwner ? (
                   <>
                     <Link href={`/checkout?serviceId=${service.id}`}>
-                      <Button className="w-full bg-green-600 hover:bg-green-700">
-                        豕ｨ譁・☆繧・
+                      <Button className="w-full bg-green-600 hover:bg-green-700 text-white">
+                        注文する
                       </Button>
                     </Link>
                     <Link href={`/messages/new?userId=${service.userId}`}>
-                      <Button variant="outline" className="w-full">
+                      <Button variant="outline" className="w-full dark:bg-gray-800 dark:text-white dark:border-gray-700 dark:hover:bg-gray-700">
                         <MessageCircle className="w-4 h-4 mr-2" />
-                        雉ｪ蝠上☆繧・
+                        質問する
                       </Button>
                     </Link>
                   </>
                 ) : (
-                  <div className="text-center py-4 text-gray-500">
-                    縺ゅ↑縺溘・繧ｵ繝ｼ繝薙せ縺ｧ縺・
+                  <div className="text-center py-4 text-gray-500 dark:text-gray-400">
+                    これはあなたのサービスです
                   </div>
                 )}
-                
-                <button className="w-full flex items-center justify-center space-x-2 text-gray-600 hover:text-red-500 py-2">
+
+                <button className="w-full flex items-center justify-center space-x-2 text-gray-600 dark:text-gray-400 hover:text-red-500 dark:hover:text-red-400 py-2">
                   <Heart className="w-4 h-4" />
-                  <span>縺頑ｰ励↓蜈･繧翫↓霑ｽ蜉</span>
+                  <span>お気に入りに追加</span>
                 </button>
               </div>
             </div>
@@ -373,6 +372,3 @@ export default async function ServicePage({ params }: ServicePageProps) {
     </div>
   )
 }
-
-
-

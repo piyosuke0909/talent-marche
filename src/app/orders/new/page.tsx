@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, Suspense } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
@@ -8,7 +8,9 @@ import Image from 'next/image'
 import { ArrowLeft, CreditCard, Shield, Clock } from 'lucide-react'
 import type { ServiceDetail } from '@/types'
 
-export default function NewOrderPage() {
+export const dynamic = 'force-dynamic'
+
+function NewOrderContent() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -125,7 +127,7 @@ export default function NewOrderPage() {
           {/* サービス情報 */}
           <div className="bg-white rounded-lg shadow-md p-6">
             <h2 className="text-lg font-semibold mb-4">サービス詳細</h2>
-            
+
             {service.images && service.images.length > 0 && (
               <Image
                 src={service.images[0]}
@@ -135,10 +137,10 @@ export default function NewOrderPage() {
                 className="w-full h-48 rounded-lg object-cover mb-4"
               />
             )}
-            
+
             <h3 className="font-semibold text-lg mb-2">{service.title}</h3>
             <p className="text-gray-600 mb-4">{service.description}</p>
-            
+
             <div className="flex items-center mb-4">
               <Image
                 src={service.user.image || '/images/default-avatar.svg'}
@@ -152,7 +154,7 @@ export default function NewOrderPage() {
                 <p className="text-sm text-gray-600">@{service.user.username}</p>
               </div>
             </div>
-            
+
             <div className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
               <div>
                 <p className="text-2xl font-bold text-green-600">¥{service.price.toLocaleString()}</p>
@@ -167,7 +169,7 @@ export default function NewOrderPage() {
           {/* 注文フォーム */}
           <div className="bg-white rounded-lg shadow-md p-6">
             <h2 className="text-lg font-semibold mb-4">注文内容</h2>
-            
+
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -182,7 +184,7 @@ export default function NewOrderPage() {
                   required
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   希望納期
@@ -198,7 +200,7 @@ export default function NewOrderPage() {
                   最短納期: {new Date(Date.now() + service.deliveryDays * 24 * 60 * 60 * 1000).toLocaleDateString('ja-JP')}
                 </p>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   予算 <span className="text-red-500">*</span>
@@ -244,7 +246,7 @@ export default function NewOrderPage() {
                   </>
                 )}
               </button>
-              
+
               <p className="text-xs text-gray-500 text-center">
                 注文確定後、決済ページに進みます。決済完了まで料金は請求されません。
               </p>
@@ -253,5 +255,17 @@ export default function NewOrderPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function NewOrderPage() {
+  return (
+    <Suspense fallback={
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center">読み込み中...</div>
+      </div>
+    }>
+      <NewOrderContent />
+    </Suspense>
   )
 }

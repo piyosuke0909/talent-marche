@@ -19,9 +19,40 @@ export async function POST(request: NextRequest) {
     })
 
     if (existingUserByEmail) {
+      // 既に認証済みのユーザーがいる場合はエラー
+      if (existingUserByEmail.isVerified) {
+        return NextResponse.json(
+          { error: "このメールアドレスは既に使用されています" },
+          { status: 409 }
+        )
+      }
+
+      // 未認証のユーザーがいる場合は、そのユーザー情報を更新して再利用する
+      // パスワードをハッシュ化
+      const hashedPassword = await bcrypt.hash(password, 12)
+
+      const updatedUser = await prisma.user.update({
+        where: { email },
+        data: {
+          username,
+          password: hashedPassword,
+          name: name || username,
+        },
+        select: {
+          id: true,
+          email: true,
+          username: true,
+          name: true,
+          createdAt: true,
+        }
+      })
+
       return NextResponse.json(
-        { error: "このメールアドレスは既に使用されています" },
-        { status: 409 }
+        {
+          message: "ユーザー情報の更新が完了しました",
+          user: updatedUser
+        },
+        { status: 200 }
       )
     }
 
@@ -58,9 +89,9 @@ export async function POST(request: NextRequest) {
     })
 
     return NextResponse.json(
-      { 
+      {
         message: "ユーザーの登録が完了しました",
-        user 
+        user
       },
       { status: 201 }
     )

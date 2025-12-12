@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -38,7 +38,7 @@ interface RecentService {
   orderCount: number
 }
 
-export default function DashboardPage() {
+function DashboardPageContent() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const [stats, setStats] = useState<DashboardStats>({
@@ -122,220 +122,236 @@ export default function DashboardPage() {
 
   if (status === 'loading' || loading) {
     return (
-        <div className="container mx-auto px-4 py-8">
-          <div className="text-center">読み込み中...</div>
-        </div>
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center">読み込み中...</div>
+      </div>
     )
   }
 
   return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">ダッシュボード</h1>
-          <p className="text-gray-600">こんにちは、{session?.user?.name}さん</p>
-        </div>
+    <div className="container mx-auto px-4 py-8 dark:text-gray-100">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-2">ダッシュボード</h1>
+        <p className="text-gray-600 dark:text-gray-400">こんにちは、{session?.user?.name}さん</p>
+      </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="flex items-center">
-              <div className="p-3 rounded-full bg-blue-100 text-blue-600 mr-4">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                </svg>
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-gray-800">{stats.totalServices}</p>
-                <p className="text-sm text-gray-600">出品中のサービス</p>
-              </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 transition-colors duration-200">
+          <div className="flex items-center">
+            <div className="p-3 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 mr-4">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+              </svg>
             </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="flex items-center">
-              <div className="p-3 rounded-full bg-green-100 text-green-600 mr-4">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-                </svg>
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-gray-800">{stats.totalOrders}</p>
-                <p className="text-sm text-gray-600">受注数</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="flex items-center">
-              <div className="p-3 rounded-full bg-yellow-100 text-yellow-600 mr-4">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                </svg>
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-gray-800">¥{stats.totalEarnings.toLocaleString()}</p>
-                <p className="text-sm text-gray-600">総売上</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="flex items-center">
-              <div className="p-3 rounded-full bg-purple-100 text-purple-600 mr-4">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                </svg>
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-gray-800">{stats.totalRequests}</p>
-                <p className="text-sm text-gray-600">依頼数</p>
-              </div>
+            <div>
+              <p className="text-2xl font-bold text-gray-800 dark:text-white">{stats.totalServices}</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">出品中のサービス</p>
             </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div className="bg-white rounded-lg shadow-md">
-            <div className="p-6 border-b border-gray-200">
-              <h2 className="text-xl font-bold text-gray-800">最近の注文</h2>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 transition-colors duration-200">
+          <div className="flex items-center">
+            <div className="p-3 rounded-full bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-300 mr-4">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+              </svg>
             </div>
-            <div className="p-6">
-              {recentOrders.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  <svg className="w-12 h-12 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                  <p>最近の注文はありません</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {recentOrders.map((order) => (
-                    <div key={order.id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="flex items-center">
-                        <Image
-                          src={order.buyer.image || '/images/default-avatar.png'}
-                          alt={order.buyer.name}
-                          width={40}
-                          height={40}
-                          className="mr-3 h-10 w-10 rounded-full object-cover"
-                          unoptimized
-                        />
-                        <div>
-                          <h4 className="font-medium text-gray-900">{order.service.title}</h4>
-                          <p className="text-sm text-gray-600">{order.buyer.name}</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-bold text-gray-900">¥{order.service.price.toLocaleString()}</p>
-                        <span className={`inline-block px-2 py-1 rounded-full text-xs ${getStatusColor(order.status)}`}>
-                          {getStatusText(order.status)}
-                        </span>
+            <div>
+              <p className="text-2xl font-bold text-gray-800 dark:text-white">{stats.totalOrders}</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">受注数</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 transition-colors duration-200">
+          <div className="flex items-center">
+            <div className="p-3 rounded-full bg-yellow-100 dark:bg-yellow-900 text-yellow-600 dark:text-yellow-300 mr-4">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-gray-800 dark:text-white">¥{stats.totalEarnings.toLocaleString()}</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">総売上</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 transition-colors duration-200">
+          <div className="flex items-center">
+            <div className="p-3 rounded-full bg-purple-100 dark:bg-purple-900 text-purple-600 dark:text-purple-300 mr-4">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-gray-800 dark:text-white">{stats.totalRequests}</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">依頼数</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md transition-colors duration-200">
+          <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+            <h2 className="text-xl font-bold text-gray-800 dark:text-white">最近の注文</h2>
+          </div>
+          <div className="p-6">
+            {recentOrders.length === 0 ? (
+              <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                <svg className="w-12 h-12 mx-auto mb-4 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <p>最近の注文はありません</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {recentOrders.map((order) => (
+                  <div key={order.id} className="flex items-center justify-between p-4 border dark:border-gray-700 rounded-lg">
+                    <div className="flex items-center">
+                      <Image
+                        src={order.buyer.image || '/images/default-avatar.png'}
+                        alt={order.buyer.name}
+                        width={40}
+                        height={40}
+                        className="mr-3 h-10 w-10 rounded-full object-cover"
+                        unoptimized
+                      />
+                      <div>
+                        <h4 className="font-medium text-gray-900 dark:text-white">{order.service.title}</h4>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">{order.buyer.name}</p>
                       </div>
                     </div>
-                  ))}
-                </div>
-              )}
-            </div>
+                    <div className="text-right">
+                      <p className="font-bold text-gray-900 dark:text-white">¥{order.service.price.toLocaleString()}</p>
+                      <span className={`inline-block px-2 py-1 rounded-full text-xs ${getStatusColor(order.status)}`}>
+                        {getStatusText(order.status)}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
+        </div>
 
-          <div className="bg-white rounded-lg shadow-md">
-            <div className="p-6 border-b border-gray-200">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-bold text-gray-800">あなたのサービス</h2>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md transition-colors duration-200">
+          <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-bold text-gray-800 dark:text-white">あなたのサービス</h2>
+              <div className="flex gap-4">
+                <Link
+                  href="/dashboard/services"
+                  className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 text-sm font-medium"
+                >
+                  すべて見る
+                </Link>
                 <Link
                   href="/services/create"
-                  className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                  className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-sm font-medium"
                 >
                   新規作成
                 </Link>
               </div>
             </div>
-            <div className="p-6">
-              {recentServices.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  <svg className="w-12 h-12 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                  </svg>
-                  <p className="mb-4">サービスがありません</p>
-                  <Link
-                    href="/services/create"
-                    className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                  >
-                    最初のサービスを作成
-                  </Link>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {recentServices.map((service) => (
-                    <Link key={service.id} href={`/services/${service.id}`}>
-                      <div className="flex items-center p-4 border rounded-lg hover:bg-gray-50 transition-colors">
-                        <div className="w-16 h-16 bg-gray-200 rounded-lg mr-4 flex-shrink-0 overflow-hidden">
-                          {service.images && service.images.length > 0 ? (
-                            <Image
-                              src={service.images[0]}
-                              alt={service.title}
-                              width={96}
-                              height={96}
-                              className="h-full w-full object-cover"
-                              unoptimized
-                            />
-                          ) : (
-                            <div className="w-full h-full bg-gray-300 flex items-center justify-center">
-                              <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                              </svg>
-                            </div>
-                          )}
-                        </div>
-                        <div className="flex-1">
-                          <h4 className="font-medium text-gray-900 mb-1">{service.title}</h4>
-                          <div className="flex items-center justify-between">
-                            <p className="text-sm text-gray-600">¥{service.price.toLocaleString()}</p>
-                            <p className="text-sm text-gray-500">{service.orderCount}件の注文</p>
+          </div>
+          <div className="p-6">
+            {recentServices.length === 0 ? (
+              <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                <svg className="w-12 h-12 mx-auto mb-4 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                </svg>
+                <p className="mb-4">サービスがありません</p>
+                <Link
+                  href="/services/create"
+                  className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  最初のサービスを作成
+                </Link>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {recentServices.map((service) => (
+                  <Link key={service.id} href={`/services/${service.id}`}>
+                    <div className="flex items-center p-4 border dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                      <div className="w-16 h-16 bg-gray-200 dark:bg-gray-700 rounded-lg mr-4 flex-shrink-0 overflow-hidden">
+                        {service.images && service.images.length > 0 ? (
+                          <Image
+                            src={service.images[0]}
+                            alt={service.title}
+                            width={96}
+                            height={96}
+                            className="h-full w-full object-cover"
+                            unoptimized
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center">
+                            <svg className="w-6 h-6 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
                           </div>
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-medium text-gray-900 dark:text-white mb-1">{service.title}</h4>
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm text-gray-600 dark:text-gray-400">¥{service.price.toLocaleString()}</p>
+                          <p className="text-sm text-gray-500 dark:text-gray-500">{service.orderCount}件の注文</p>
                         </div>
                       </div>
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
           </div>
         </div>
-
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Link
-            href="/services/create"
-            className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg p-6 text-center transition-colors"
-          >
-            <svg className="w-8 h-8 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
-            </svg>
-            <h3 className="text-lg font-bold mb-2">新しいサービス</h3>
-            <p className="text-sm opacity-90">サービスを出品する</p>
-          </Link>
-
-          <Link
-            href="/requests/create"
-            className="bg-green-600 hover:bg-green-700 text-white rounded-lg p-6 text-center transition-colors"
-          >
-            <svg className="w-8 h-8 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-            </svg>
-            <h3 className="text-lg font-bold mb-2">新しい依頼</h3>
-            <p className="text-sm opacity-90">依頼を作成する</p>
-          </Link>
-
-          <Link
-            href="/messages"
-            className="bg-purple-600 hover:bg-purple-700 text-white rounded-lg p-6 text-center transition-colors"
-          >
-            <svg className="w-8 h-8 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-            </svg>
-            <h3 className="text-lg font-bold mb-2">メッセージ</h3>
-            <p className="text-sm opacity-90">メッセージを確認する</p>
-          </Link>
-        </div>
       </div>
+
+      <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Link
+          href="/services/create"
+          className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg p-6 text-center transition-colors shadow-md"
+        >
+          <svg className="w-8 h-8 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+          </svg>
+          <h3 className="text-lg font-bold mb-2">新しいサービス</h3>
+          <p className="text-sm opacity-90">サービスを出品する</p>
+        </Link>
+
+        <Link
+          href="/requests/create"
+          className="bg-green-600 hover:bg-green-700 text-white rounded-lg p-6 text-center transition-colors shadow-md"
+        >
+          <svg className="w-8 h-8 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+          </svg>
+          <h3 className="text-lg font-bold mb-2">新しい依頼</h3>
+          <p className="text-sm opacity-90">依頼を作成する</p>
+        </Link>
+
+        <Link
+          href="/messages"
+          className="bg-purple-600 hover:bg-purple-700 text-white rounded-lg p-6 text-center transition-colors shadow-md"
+        >
+          <svg className="w-8 h-8 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+          </svg>
+          <h3 className="text-lg font-bold mb-2">メッセージ</h3>
+          <p className="text-sm opacity-90">メッセージを確認する</p>
+        </Link>
+      </div>
+    </div>
+  )
+}
+
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <DashboardPageContent />
+    </Suspense>
   )
 }

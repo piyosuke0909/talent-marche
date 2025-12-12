@@ -11,7 +11,7 @@ interface RouteParams {
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const session = await getServerAuthSession()
-    
+
     if (!session?.user?.id) {
       return NextResponse.json(
         { error: "認証が必要です" },
@@ -110,7 +110,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
     const session = await getServerAuthSession()
-    
+
     if (!session?.user?.id) {
       return NextResponse.json(
         { error: "認証が必要です" },
@@ -143,10 +143,10 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
     // ステータス変更権限をチェック
     const canUpdateStatus = (
-      (existingOrder.sellerId === session.user.id && 
-       ["IN_PROGRESS", "COMPLETED", "CANCELLED"].includes(status)) ||
-      (existingOrder.buyerId === session.user.id && 
-       ["CANCELLED"].includes(status) && existingOrder.status === "PENDING")
+      (existingOrder.sellerId === session.user.id &&
+        ["IN_PROGRESS", "COMPLETED", "CANCELLED"].includes(status)) ||
+      (existingOrder.buyerId === session.user.id &&
+        ["CANCELLED"].includes(status) && existingOrder.status === "PENDING")
     )
 
     if (!canUpdateStatus) {
@@ -156,39 +156,72 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       )
     }
 
-    const order = await prisma.order.update({
-      where: { id },
-      data: { status },
-      include: {
-        service: {
-          select: {
-            id: true,
-            title: true,
-            images: true,
-          }
-        },
-        seller: {
-          select: {
-            id: true,
-            username: true,
-            name: true,
-            image: true,
-          }
-        },
-        buyer: {
-          select: {
-            id: true,
-            username: true,
-            name: true,
-            image: true,
+    const result = await prisma.$transaction(async (tx) => {
+      const updatedOrder = await tx.order.update({
+        where: { id },
+        data: { status },
+        include: {
+          service: {
+            select: {
+              id: true,
+              title: true,
+              images: true,
+            }
+          },
+          seller: {
+            select: {
+              id: true,
+              username: true,
+              name: true,
+              image: true,
+            }
+          },
+          buyer: {
+            select: {
+              id: true,
+              username: true,
+              name: true,
+              image: true,
+              bio: true,
+              email: true,
+            }
           }
         }
+      })
+
+      // 注文完了時に出品者の残高を加算（テナント決済でない場合のみ）
+      if (status === 'COMPLETED' && existingOrder.status !== 'COMPLETED' && !existingOrder.isTenantPayment) {
+        await tx.user.update({
+          where: { id: existingOrder.sellerId },
+          data: {
+            balance: { increment: existingOrder.totalAmount }
+          }
+        })
       }
+
+      // Send Order Completed Email
+      if (status === 'COMPLETED' && existingOrder.status !== 'COMPLETED') {
+        try {
+          const { sendEmail } = await import('@/lib/mail')
+          await sendEmail({
+            to: result.buyer.email,
+            subject: '【Talent Marche】取引完了のお知らせ',
+            template: 'order_completed',
+            data: {
+              userName: result.buyer.name || result.buyer.username,
+              serviceTitle: result.service?.title || 'サービス',
+              orderId: result.id
+            }
+          })
+        } catch (e) { console.error('Failed to send completion email:', e) }
+      }
+
+      return updatedOrder
     })
 
     return NextResponse.json({
       message: "注文ステータスを更新しました",
-      order
+      order: result
     })
 
   } catch (error) {
@@ -203,7 +236,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
     const session = await getServerAuthSession()
-    
+
     if (!session?.user?.id) {
       return NextResponse.json(
         { error: "認証が必要です" },
@@ -240,13 +273,59 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       )
     }
 
+    // 返金処理 (PAY.JP)
+    if (existingOrder.paymentId) {
+      try {
+        const Payjp = (await import('payjp')).default
+        const payjp = Payjp(process.env.PAYJP_SECRET_KEY!)
+
+        // Refund the charge
+        await payjp.charges.refund(existingOrder.paymentId)
+
+        // Send Refund Email
+        try {
+          const { sendEmail } = await import('@/lib/mail')
+          const buyer = await prisma.user.findUnique({
+            where: { id: existingOrder.buyerId },
+            select: { email: true, name: true, username: true }
+          })
+
+          if (buyer && buyer.email) {
+            const service = await prisma.service.findUnique({
+              where: { id: existingOrder.serviceId },
+              select: { title: true }
+            })
+
+            await sendEmail({
+              to: buyer.email,
+              subject: '【Talent Marche】返金のお知らせ',
+              template: 'refund_issued',
+              data: {
+                userName: buyer.name || buyer.username || 'お客様',
+                serviceTitle: service?.title || 'サービス',
+                amount: existingOrder.totalAmount,
+                orderId: existingOrder.id
+              }
+            })
+          }
+        } catch (e) { console.error('Failed to send refund email:', e) }
+
+      } catch (error) {
+        console.error("Refund failed:", error)
+        return NextResponse.json(
+          { error: "返金処理に失敗しました。PAY.JPダッシュボードを確認してください。" },
+          { status: 500 }
+        )
+      }
+    }
+
     await prisma.order.update({
       where: { id },
       data: { status: "CANCELLED" }
     })
 
     return NextResponse.json({
-      message: "注文をキャンセルしました"
+      message: existingOrder.paymentId ? "注文をキャンセルし、返金処理を行いました" : "注文をキャンセルしました"
     })
 
   } catch (error) {

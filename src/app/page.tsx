@@ -67,9 +67,9 @@ export default async function HomePage() {
     getCategories(),
   ])
   return (
-    <div className="bg-gray-100 font-sans">
+    <div className="bg-gray-100 dark:bg-gray-950 font-sans min-h-screen transition-colors duration-200">
       {/* Hero Section */}
-      <section 
+      <section
         className="hero-section relative h-96 bg-cover bg-center"
         style={{
           backgroundImage: "linear-gradient(rgba(37,99,235,0.25), rgba(37,99,235,0.25)), url('https://images.unsplash.com/photo-1520607162513-77705c0f0d4a?q=80&w=1600&auto=format&fit=crop')"
@@ -128,11 +128,11 @@ export default async function HomePage() {
         </div>
 
         {/* Recommended Services */}
-        <h2 className="text-2xl font-bold mb-4">あなたにおすすめ</h2>
+        <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">あなたにおすすめ</h2>
         <div className="grid grid-cols-1 gap-6">
           {services.map((service) => (
-            <div key={service.id} className="bg-white p-4 rounded-lg shadow-md flex items-center space-x-4">
-              <div className="bg-gray-200 w-24 h-24 flex-shrink-0 flex items-center justify-center rounded-lg overflow-hidden">
+            <div key={service.id} className="bg-white dark:bg-gray-900 p-4 rounded-lg shadow-md flex items-center space-x-4 transition-colors duration-200">
+              <div className="bg-gray-200 dark:bg-gray-800 w-24 h-24 flex-shrink-0 flex items-center justify-center rounded-lg overflow-hidden">
                 {service.images[0] ? (
                   <Image
                     src={service.images[0]}
@@ -144,32 +144,32 @@ export default async function HomePage() {
                   />
                 ) : (
                   <svg className="w-10 h-10 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M4 4h16v16H4V4zm2 2v12h12V6H6zm1 1h10v10H7V7zm1 1v8h8V8H8z"/>
+                    <path d="M4 4h16v16H4V4zm2 2v12h12V6H6zm1 1h10v10H7V7zm1 1v8h8V8H8z" />
                   </svg>
                 )}
               </div>
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
                 <Link href={`/services/${service.id}`} className="hover:underline">
-                  <h3 className="text-lg font-bold">{service.title}</h3>
+                  <h3 className="text-lg font-bold truncate text-gray-900 dark:text-white">{service.title}</h3>
                 </Link>
-                <p className="text-sm text-gray-600 mt-1 line-clamp-2">{service.description}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-300 mt-1 line-clamp-2">{service.description}</p>
                 <div className="flex items-center space-x-2 mt-1">
-                  <div className="text-green-600 font-semibold">¥{service.price.toLocaleString()}〜</div>
+                  <div className="text-green-600 dark:text-green-400 font-semibold">¥{service.price.toLocaleString()}〜</div>
                   {service.averageRating > 0 && (
                     <div className="flex items-center space-x-1">
                       <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                      <span className="text-sm text-gray-600">{service.averageRating}</span>
-                      <span className="text-sm text-gray-500">({service._count.reviews})</span>
+                      <span className="text-sm text-gray-600 dark:text-gray-300">{service.averageRating}</span>
+                      <span className="text-sm text-gray-500 dark:text-gray-400">({service._count.reviews})</span>
                     </div>
                   )}
                 </div>
-                <div className="text-xs text-gray-500 mt-1">
+                <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                   by {service.user.name || service.user.username} • {service.category.name}
                 </div>
-                
+
                 <div className="flex items-center space-x-2 mt-2">
                   <Link href={`/services/${service.id}`}>
-                    <Button size="sm" className="bg-red-500 hover:bg-red-600">
+                    <Button size="sm" className="bg-red-500 hover:bg-red-600 text-white border-none">
                       詳細を見る
                     </Button>
                   </Link>
@@ -178,49 +178,47 @@ export default async function HomePage() {
               </div>
             </div>
           ))}
-          
+
           {services.length === 0 && (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
               まだサービスが登録されていません
             </div>
           )}
         </div>
 
         {/* Categories Section */}
-        <section className="bg-gray-100 -mx-4 px-4 py-16 mt-8">
+        <section className="bg-gray-100 dark:bg-gray-950 -mx-4 px-4 py-16 mt-8 transition-colors duration-200">
           <div className="container mx-auto">
-            <h2 className="text-3xl font-bold mb-8 text-center text-gray-800">カテゴリから探す</h2>
+            <h2 className="text-3xl font-bold mb-8 text-center text-gray-800 dark:text-white">カテゴリから探す</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {categories.map((category, index) => (
                 <Link key={category.id} href={`/categories/${category.slug}`}>
-                  <div className="bg-white p-6 rounded-lg shadow hover:shadow-md transition-shadow cursor-pointer">
+                  <div className="bg-white dark:bg-gray-900 p-6 rounded-lg shadow hover:shadow-md transition-all cursor-pointer">
                     <div className="flex items-center mb-4">
-                      <div className={`w-12 h-12 rounded-lg flex items-center justify-center mr-4 ${
-                        index % 6 === 0 ? 'bg-blue-100' :
-                        index % 6 === 1 ? 'bg-green-100' :
-                        index % 6 === 2 ? 'bg-purple-100' :
-                        index % 6 === 3 ? 'bg-red-100' :
-                        index % 6 === 4 ? 'bg-yellow-100' :
-                        'bg-indigo-100'
-                      }`}>
+                      <div className={`w-12 h-12 rounded-lg flex items-center justify-center mr-4 ${index % 6 === 0 ? 'bg-blue-100 dark:bg-blue-900/30' :
+                          index % 6 === 1 ? 'bg-green-100 dark:bg-green-900/30' :
+                            index % 6 === 2 ? 'bg-purple-100 dark:bg-purple-900/30' :
+                              index % 6 === 3 ? 'bg-red-100 dark:bg-red-900/30' :
+                                index % 6 === 4 ? 'bg-yellow-100 dark:bg-yellow-900/30' :
+                                  'bg-indigo-100 dark:bg-indigo-900/30'
+                        }`}>
                         {category.icon ? (
                           <span className="text-2xl">{category.icon}</span>
                         ) : (
-                          <svg className={`w-6 h-6 ${
-                            index % 6 === 0 ? 'text-blue-600' :
-                            index % 6 === 1 ? 'text-green-600' :
-                            index % 6 === 2 ? 'text-purple-600' :
-                            index % 6 === 3 ? 'text-red-600' :
-                            index % 6 === 4 ? 'text-yellow-600' :
-                            'text-indigo-600'
-                          }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+                          <svg className={`w-6 h-6 ${index % 6 === 0 ? 'text-blue-600 dark:text-blue-400' :
+                              index % 6 === 1 ? 'text-green-600 dark:text-green-400' :
+                                index % 6 === 2 ? 'text-purple-600 dark:text-purple-400' :
+                                  index % 6 === 3 ? 'text-red-600 dark:text-red-400' :
+                                    index % 6 === 4 ? 'text-yellow-600 dark:text-yellow-400' :
+                                      'text-indigo-600 dark:text-indigo-400'
+                            }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                           </svg>
                         )}
                       </div>
-                      <h3 className="text-lg font-semibold">{category.name}</h3>
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{category.name}</h3>
                     </div>
-                    <p className="text-gray-600 text-sm">{category.description || 'カテゴリの詳細はこちら'}</p>
+                    <p className="text-gray-600 dark:text-gray-300 text-sm">{category.description || 'カテゴリの詳細はこちら'}</p>
                   </div>
                 </Link>
               ))}

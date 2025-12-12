@@ -51,15 +51,15 @@ function mapMessage(message: MessageWithRelations, viewerId: string) {
     receiver: message.receiver,
     order: message.order
       ? {
-          id: message.order.id,
-          status: message.order.status,
-          service: message.order.service
-            ? {
-                id: message.order.service.id,
-                title: message.order.service.title,
-              }
-            : null,
-        }
+        id: message.order.id,
+        status: message.order.status,
+        service: message.order.service
+          ? {
+            id: message.order.service.id,
+            title: message.order.service.title,
+          }
+          : null,
+      }
       : null,
   }
 }
@@ -98,16 +98,12 @@ export async function GET(request: NextRequest) {
       where.orderId = orderId
     }
 
-    const queryOptions: Prisma.MessageFindManyArgs = {
+    const queryOptions = {
       where,
       include: messageInclude,
-      orderBy: { createdAt: "desc" },
+      orderBy: { createdAt: "desc" as const },
       take: take + 1,
-    }
-
-    if (cursor) {
-      queryOptions.cursor = { id: cursor }
-      queryOptions.skip = 1
+      ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
     }
 
     const messages = await prisma.message.findMany(queryOptions)

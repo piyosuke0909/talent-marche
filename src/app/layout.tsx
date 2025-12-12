@@ -1,7 +1,9 @@
+import { Suspense } from 'react'
 import type { Metadata } from "next";
 import NextSessionProvider from '@/components/providers/SessionProvider'
 import Header from '@/components/layout/Header'
 import Footer from '@/components/layout/Footer'
+import MarcheChatWidget from '@/components/marche/MarcheChatWidget'
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -18,10 +20,13 @@ export default function RootLayout({
     <html lang="ja">
       <body className="min-h-screen bg-gray-100 flex flex-col font-sans">
         <NextSessionProvider>
-          <Header />
+          <Suspense fallback={<div className="h-16 bg-white shadow-md" />}>
+            <Header />
+          </Suspense>
           <main className="flex-1">
             {children}
           </main>
+          <MarcheChatWidget />
           <Footer />
         </NextSessionProvider>
       </body>

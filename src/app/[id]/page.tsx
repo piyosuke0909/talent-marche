@@ -101,7 +101,7 @@ export default async function RequestDetailPage({ params }: PageProps) {
             <dl className="mt-3 space-y-2 text-sm text-gray-600">
               <div className="flex items-center justify-between">
                 <dt>予算</dt>
-                <dd className="text-lg font-bold text-gray-900">{formatPrice(request.budget)}</dd>
+                <dd className="text-lg font-bold text-gray-900">{formatPrice(request.budget ?? 0)}</dd>
               </div>
               <div className="flex items-center justify-between">
                 <dt>締切</dt>

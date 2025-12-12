@@ -6,16 +6,16 @@ import { prisma } from '@/lib/db'
 const SORT_OPTIONS = ['recent', 'budget_high', 'budget_low', 'deadline'] as const
 type RequestSort = typeof SORT_OPTIONS[number]
 
-function buildRequestOrder(sortBy: RequestSort) {
+function buildRequestOrder(sortBy: RequestSort): Prisma.RequestOrderByWithRelationInput[] {
   switch (sortBy) {
     case 'budget_high':
-      return [{ budget: 'desc' }, { createdAt: 'desc' }] as const
+      return [{ budget: 'desc' }, { createdAt: 'desc' }]
     case 'budget_low':
-      return [{ budget: 'asc' }, { createdAt: 'desc' }] as const
+      return [{ budget: 'asc' }, { createdAt: 'desc' }]
     case 'deadline':
-      return [{ deadline: 'asc' }, { createdAt: 'desc' }] as const
+      return [{ deadline: 'asc' }, { createdAt: 'desc' }]
     default:
-      return [{ createdAt: 'desc' }] as const
+      return [{ createdAt: 'desc' }]
   }
 }
 
@@ -41,8 +41,8 @@ export async function POST(request: NextRequest) {
 
     const sanitizedSkills = Array.isArray(skills)
       ? (skills as unknown[])
-          .filter((skill): skill is string => typeof skill === 'string' && skill.trim().length > 0)
-          .map((skill) => skill.trim())
+        .filter((skill): skill is string => typeof skill === 'string' && skill.trim().length > 0)
+        .map((skill) => skill.trim())
       : []
 
     const requestData = await prisma.request.create({

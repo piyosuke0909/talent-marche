@@ -186,8 +186,98 @@ export default function OrderDetailClient({ initialOrder, currentUserId }: Order
     }
   }
 
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false)
+  const [rating, setRating] = useState(5)
+  const [comment, setComment] = useState('')
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false)
+
+  const hasReviewed = order.reviews.some(r => r.reviewer.id === currentUserId)
+  const canReview = order.status === 'COMPLETED' && !hasReviewed
+
+  const handleReviewSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsSubmittingReview(true)
+    setErrorMessage(null)
+    try {
+      const response = await fetch('/api/reviews', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderId: order.id,
+          rating,
+          comment
+        })
+      })
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}))
+        throw new Error(payload.error || 'レビューの送信に失敗しました')
+      }
+
+      await refreshOrder()
+      setFeedback('レビューを送信しました')
+      setIsReviewModalOpen(false)
+    } catch (error) {
+      setErrorMessage((error as Error).message)
+    } finally {
+      setIsSubmittingReview(false)
+    }
+  }
+
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8 relative">
+      {isReviewModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+            <h3 className="mb-4 text-xl font-bold text-gray-900">レビューを書く</h3>
+            <form onSubmit={handleReviewSubmit}>
+              <div className="mb-4">
+                <label className="mb-2 block text-sm font-medium text-gray-700">評価 (1-5)</label>
+                <div className="flex gap-2">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => setRating(star)}
+                      className={`text-2xl transition-colors ${rating >= star ? 'text-amber-400' : 'text-gray-300'}`}
+                    >
+                      ★
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="mb-6">
+                <label className="mb-2 block text-sm font-medium text-gray-700">コメント (任意)</label>
+                <textarea
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                  className="w-full rounded-lg border border-gray-300 p-3 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                  rows={4}
+                  placeholder="取引の感想を書いてください..."
+                />
+              </div>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsReviewModalOpen(false)}
+                  className="flex-1 rounded-lg border border-gray-300 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                  disabled={isSubmittingReview}
+                >
+                  キャンセル
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 rounded-lg bg-blue-600 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
+                  disabled={isSubmittingReview}
+                >
+                  {isSubmittingReview ? <Loader2 className="mx-auto h-5 w-5 animate-spin" /> : '送信する'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       <div className="mb-6 flex items-center justify-between">
         <button
           onClick={() => router.back()}
@@ -257,6 +347,18 @@ export default function OrderDetailClient({ initialOrder, currentUserId }: Order
                 {statusDescriptions[order.status]}
               </div>
             )}
+
+            {canReview && (
+              <div className="mt-6 rounded-xl border border-amber-100 bg-amber-50 p-6 text-center">
+                <p className="mb-4 text-amber-800 font-medium">取引が完了しました！相手へのレビューを書きませんか？</p>
+                <button
+                  onClick={() => setIsReviewModalOpen(true)}
+                  className="rounded-full bg-amber-500 px-6 py-2.5 text-sm font-bold text-white shadow-lg hover:bg-amber-600 transition-colors"
+                >
+                  レビューを書く
+                </button>
+              </div>
+            )}
           </div>
 
           {order.service && (
@@ -321,11 +423,10 @@ export default function OrderDetailClient({ initialOrder, currentUserId }: Order
                 {order.messages.map(msg => (
                   <li
                     key={msg.id}
-                    className={`rounded-xl border px-4 py-3 text-sm ${
-                      msg.senderId === currentUserId
-                        ? 'border-blue-100 bg-blue-50 text-blue-800'
-                        : 'border-gray-100 bg-white text-gray-700'
-                    }`}
+                    className={`rounded-xl border px-4 py-3 text-sm ${msg.senderId === currentUserId
+                      ? 'border-blue-100 bg-blue-50 text-blue-800'
+                      : 'border-gray-100 bg-white text-gray-700'
+                      }`}
                   >
                     <div className="flex items-center justify-between text-xs">
                       <span className="font-semibold">
@@ -408,13 +509,12 @@ export default function OrderDetailClient({ initialOrder, currentUserId }: Order
                     key={nextStatus}
                     onClick={() => handleStatusUpdate(nextStatus)}
                     disabled={!!updatingStatus}
-                    className={`flex w-full items-center justify-center rounded-full px-4 py-2 text-sm font-semibold text-white transition ${
-                      nextStatus === 'CANCELLED'
-                        ? 'bg-rose-500 hover:bg-rose-600'
-                        : nextStatus === 'COMPLETED'
-                          ? 'bg-emerald-500 hover:bg-emerald-600'
-                          : 'bg-blue-500 hover:bg-blue-600'
-                    } disabled:cursor-not-allowed disabled:opacity-60`}
+                    className={`flex w-full items-center justify-center rounded-full px-4 py-2 text-sm font-semibold text-white transition ${nextStatus === 'CANCELLED'
+                      ? 'bg-rose-500 hover:bg-rose-600'
+                      : nextStatus === 'COMPLETED'
+                        ? 'bg-emerald-500 hover:bg-emerald-600'
+                        : 'bg-blue-500 hover:bg-blue-600'
+                      } disabled:cursor-not-allowed disabled:opacity-60`}
                   >
                     {updatingStatus === nextStatus && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     {statusLabels[nextStatus]} に更新

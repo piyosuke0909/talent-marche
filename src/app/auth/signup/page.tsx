@@ -1,9 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-export default function SignUpPage() {
+function SignUpPageContent() {
   const [formData, setFormData] = useState({
     email: '',
     username: '',
@@ -54,7 +54,7 @@ export default function SignUpPage() {
       })
 
       if (response.ok) {
-        router.push('/auth/signin?message=アカウントが作成されました。サインインしてください。')
+        router.push(`/auth/verify?email=${encodeURIComponent(formData.email)}`)
       } else {
         const data = await response.json()
         setError(data.error || 'アカウントの作成に失敗しました')
@@ -67,7 +67,7 @@ export default function SignUpPage() {
   }
 
   return (
-      <div className="bg-gray-100 flex items-center justify-center py-12 px-4 min-h-[calc(100vh-200px)]">
+    <div className="bg-gray-100 flex items-center justify-center py-12 px-4 min-h-[calc(100vh-200px)]">
       <div className="max-w-md w-full space-y-8">
         <div>
           <h2 className="mt-6 text-center text-3xl font-bold text-gray-900">
@@ -80,7 +80,7 @@ export default function SignUpPage() {
             </Link>
           </p>
         </div>
-        
+
         <div className="bg-white rounded-lg shadow-md p-8">
           <form className="space-y-6" onSubmit={handleSubmit}>
             {error && (
@@ -88,7 +88,7 @@ export default function SignUpPage() {
                 {error}
               </div>
             )}
-            
+
             <div>
               <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
                 名前
@@ -184,6 +184,14 @@ export default function SignUpPage() {
           </form>
         </div>
       </div>
-      </div>
+    </div>
+  )
+}
+
+export default function SignUpPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <SignUpPageContent />
+    </Suspense>
   )
 }

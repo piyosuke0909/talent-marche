@@ -4,16 +4,17 @@ import { prisma } from '@/lib/db'
 import OrderDetailClient from '@/components/orders/OrderDetailClient'
 
 interface RouteParams {
-  params: Promise<{
+  params: {
     id: string
-  }>
+  }
 }
 
 export default async function OrderDetailPage({ params }: RouteParams) {
-  const { id } = await params
+  const { id } = params
   const session = await getServerAuthSession()
 
   if (!session?.user?.id) {
+    console.log("Session missing in OrderDetailPage, redirecting to signin. Session:", session)
     redirect(`/auth/signin?callbackUrl=/orders/${id}`)
   }
 

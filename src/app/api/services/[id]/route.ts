@@ -12,11 +12,11 @@ interface RouteParams {
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const { id } = await params
+    const session = await getServerAuthSession()
+
+    // 1. Fetch without isActive filter first to check existence
     const service = await prisma.service.findUnique({
-      where: { 
-        id,
-        isActive: true 
-      },
+      where: { id },
       include: {
         user: {
           select: {
@@ -66,6 +66,20 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         { status: 404 }
       )
     }
+
+    // 2. Check accessibility
+    // If active, anyone can see.
+    // If inactive, only the owner can see.
+    if (!service.isActive) {
+      if (!session || session.user.id !== service.userId) {
+        return NextResponse.json(
+          { error: "このサービスは現在公開されていません" },
+          { status: 404 } // Mimic 404 for security/privacy
+        )
+      }
+    }
+
+
 
     // 平均評価を計算
     const averageRating = service.reviews.length > 0
@@ -139,7 +153,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
     const session = await getServerAuthSession()
-    
+
     if (!session?.user?.id) {
       return NextResponse.json(
         { error: "認証が必要です" },
@@ -218,7 +232,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
     const session = await getServerAuthSession()
-    
+
     if (!session?.user?.id) {
       return NextResponse.json(
         { error: "認証が必要です" },

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 
 export default function CreateRequestPage() {
@@ -16,16 +16,22 @@ export default function CreateRequestPage() {
   })
   const [titleCount, setTitleCount] = useState(0)
 
-  const categories = [
-    { id: '1', name: 'Webデザイン' },
-    { id: '2', name: 'プログラミング' },
-    { id: '3', name: 'グラフィックデザイン' },
-    { id: '4', name: 'ライティング' },
-    { id: '5', name: 'マーケティング' }
-  ]
+  interface Category {
+    id: string
+    name: string
+  }
+
+  const [categories, setCategories] = useState<Category[]>([])
+
+  useEffect(() => {
+    fetch('/api/categories')
+      .then(res => res.json())
+      .then(data => setCategories(data))
+      .catch(err => console.error('Failed to fetch categories', err))
+  }, [])
 
   const skillOptions = [
-    'JavaScript', 'Python', 'React', 'Node.js', 'PHP', 
+    'JavaScript', 'Python', 'React', 'Node.js', 'PHP',
     'Java', 'HTML/CSS', 'Photoshop', 'Illustrator', 'Figma'
   ]
 
@@ -39,7 +45,7 @@ export default function CreateRequestPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     try {
       const response = await fetch('/api/requests', {
         method: 'POST',
@@ -150,9 +156,9 @@ export default function CreateRequestPage() {
                 onChange={(e) => {
                   const skill = e.target.value
                   if (skill && !formData.skills.includes(skill)) {
-                    setFormData({ 
-                      ...formData, 
-                      skills: [...formData.skills, skill] 
+                    setFormData({
+                      ...formData,
+                      skills: [...formData.skills, skill]
                     })
                   }
                 }}
@@ -168,7 +174,7 @@ export default function CreateRequestPage() {
               {formData.skills.length > 0 && (
                 <div className="mt-3 flex flex-wrap gap-2">
                   {formData.skills.map((skill, index) => (
-                    <span 
+                    <span
                       key={index}
                       className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm flex items-center"
                     >
@@ -237,7 +243,7 @@ export default function CreateRequestPage() {
           </form>
         </div>
       </main>
-      
+
       <footer className="text-right max-w-6xl mx-auto px-4 pb-5">
         <div className="flex items-center justify-end gap-2">
           <input type="checkbox" className="mr-1" />

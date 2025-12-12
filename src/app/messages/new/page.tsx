@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, Suspense } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -8,11 +8,13 @@ import { useSession } from 'next-auth/react'
 import { ArrowLeft, Loader2, MailPlus, Search, Send, UserPlus, Users } from 'lucide-react'
 import type { ConversationPreview, ConversationsResponse, MessageUser } from '@/types'
 
+export const dynamic = 'force-dynamic'
+
 interface UserLookup extends MessageUser {
   bio?: string | null
 }
 
-export default function NewMessagePage() {
+function NewMessageContent() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -347,6 +349,7 @@ export default function NewMessagePage() {
                           username: user.username,
                           name: user.name ?? null,
                           image: user.image ?? null,
+                          bio: user.bio ?? null,
                         })
                       }
                       className="flex w-full items-center gap-3 rounded-xl border border-transparent px-3 py-2 text-left text-sm text-gray-700 transition hover:border-blue-200 hover:bg-blue-50"
@@ -380,5 +383,20 @@ export default function NewMessagePage() {
         </aside>
       </div>
     </div>
+  )
+}
+
+export default function NewMessagePage() {
+  return (
+    <Suspense fallback={
+      <div className="container mx-auto px-4 py-10">
+        <div className="flex items-center justify-center gap-2 text-sm text-gray-600">
+          <Loader2 className="h-5 w-5 animate-spin" />
+          読み込み中です…
+        </div>
+      </div>
+    }>
+      <NewMessageContent />
+    </Suspense>
   )
 }
