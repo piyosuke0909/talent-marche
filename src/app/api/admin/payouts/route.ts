@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import { getServerAuthSession } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 
+export const dynamic = 'force-dynamic'
+
 // GET: Fetch all payouts (Admin only)
 export async function GET(req: Request) {
     try {
