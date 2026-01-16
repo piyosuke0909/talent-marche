@@ -291,10 +291,14 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
           })
 
           if (buyer && buyer.email) {
-            const service = await prisma.service.findUnique({
-              where: { id: existingOrder.serviceId },
-              select: { title: true }
-            })
+            let serviceTitle = 'サービス';
+            if (existingOrder.serviceId) {
+              const service = await prisma.service.findUnique({
+                where: { id: existingOrder.serviceId },
+                select: { title: true }
+              })
+              if (service) serviceTitle = service.title
+            }
 
             await sendEmail({
               to: buyer.email,
@@ -302,7 +306,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
               template: 'refund_issued',
               data: {
                 userName: buyer.name || buyer.username || 'お客様',
-                serviceTitle: service?.title || 'サービス',
+                serviceTitle: serviceTitle,
                 amount: existingOrder.totalAmount,
                 orderId: existingOrder.id
               }

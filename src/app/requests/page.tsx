@@ -272,7 +272,7 @@ function RequestsContent() {
                     )}
                     <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
                       <Image
-                        src={request.user.image || '/images/default-avatar.png'}
+                        src={request.user.image || '/images/default-avatar.svg'}
                         alt={request.user.name || 'request owner'}
                         width={24}
                         height={24}

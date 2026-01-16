@@ -143,7 +143,7 @@ export default function Header() {
             }
 
             router.push(`/services?search=${encodeURIComponent(query)}`)
-          }} className="relative w-full max-w-xs md:max-w-md lg:max-w-lg">
+          }} className="hidden md:block relative w-full max-w-xs md:max-w-md lg:max-w-lg">
             <input
               name="search"
               type="text"
@@ -371,44 +371,90 @@ export default function Header() {
         </div>
       </div>
 
-      {/* Mobile Menu */}
+      {/* Mobile Menu Overlay */}
       {isMobileMenuOpen && (
-        <div className="md:hidden bg-white border-t">
-          <nav className="container mx-auto px-4 py-4 space-y-4">
-            <Link href="/services/create" className="block text-gray-600 hover:text-gray-900">
-              出品する
-            </Link>
-            <Link href="/requests/create" className="block text-gray-600 hover:text-gray-900">
-              依頼する
-            </Link>
-            <Link href="/messages" className="block text-gray-600 hover:text-gray-900">
-              メッセージ
-            </Link>
-            {sessionUser ? (
-              <>
-                <Link href="/dashboard" className="block text-gray-600 hover:text-gray-900">
-                  ダッシュボード
-                </Link>
-                <Link href="/dashboard/wallet" className="block text-gray-600 hover:text-gray-900">
-                  売上管理・振込申請
-                </Link>
-                {sessionUser.role === 'ADMIN' && (
-                  <Link href="/admin/users" className="block text-gray-600 hover:text-gray-900">
-                    ユーザー管理 (Admin)
-                  </Link>
-                )}
-                <button
-                  onClick={() => signOut()}
-                  className="block w-full text-left text-red-600 hover:text-red-700"
-                >
-                  ログアウト
-                </button>
-              </>
-            ) : (
-              <Link href="/auth/signin" className="block text-blue-600 hover:text-blue-700">
-                サインイン
+        <div className="fixed inset-0 z-50 bg-white dark:bg-gray-950 md:hidden flex flex-col animate-in slide-in-from-right duration-200">
+          <div className="flex items-center justify-between p-4 border-b dark:border-gray-800">
+            <span className="text-xl font-bold text-gray-900 dark:text-white">メニュー</span>
+            <button
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full"
+            >
+              <X className="w-6 h-6" />
+            </button>
+          </div>
+
+          <nav className="flex-1 overflow-y-auto p-4 space-y-6">
+            {/* Search in Menu for Mobile */}
+            <div className="mb-6">
+              <form onSubmit={(e) => {
+                e.preventDefault()
+                const query = searchQuery.trim()
+                if (!query) return
+                if (query.startsWith('ID:')) {
+                  const id = query.replace('ID:', '').trim()
+                  if (id) router.push(`/users/${id}`)
+                } else {
+                  router.push(`/services?search=${encodeURIComponent(query)}`)
+                }
+                setIsMobileMenuOpen(false)
+              }} className="relative">
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="検索..."
+                  className="w-full pl-10 pr-4 py-3 bg-gray-100 dark:bg-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              </form>
+            </div>
+
+            <div className="space-y-4">
+              <div className="font-semibold text-gray-400 text-xs uppercase tracking-wider">サービス</div>
+              <Link href="/services/create" onClick={() => setIsMobileMenuOpen(false)} className="block text-lg font-medium text-gray-800 dark:text-gray-200">
+                出品する
               </Link>
-            )}
+              <Link href="/requests/create" onClick={() => setIsMobileMenuOpen(false)} className="block text-lg font-medium text-gray-800 dark:text-gray-200">
+                依頼する
+              </Link>
+              <Link href="/services" onClick={() => setIsMobileMenuOpen(false)} className="block text-lg font-medium text-gray-800 dark:text-gray-200">
+                探す
+              </Link>
+            </div>
+
+            <div className="space-y-4">
+              <div className="font-semibold text-gray-400 text-xs uppercase tracking-wider">アカウント</div>
+              {sessionUser ? (
+                <>
+                  <Link href="/dashboard" onClick={() => setIsMobileMenuOpen(false)} className="block text-lg font-medium text-gray-800 dark:text-gray-200">
+                    ダッシュボード
+                  </Link>
+                  <Link href="/messages" onClick={() => setIsMobileMenuOpen(false)} className="block text-lg font-medium text-gray-800 dark:text-gray-200">
+                    メッセージ
+                  </Link>
+                  <Link href="/profile" onClick={() => setIsMobileMenuOpen(false)} className="block text-lg font-medium text-gray-800 dark:text-gray-200">
+                    プロフィール
+                  </Link>
+                  <Link href="/dashboard/negotiations" onClick={() => setIsMobileMenuOpen(false)} className="block text-lg font-medium text-gray-800 dark:text-gray-200">
+                    値下げ交渉一覧
+                  </Link>
+                  <button
+                    onClick={() => {
+                      setIsMobileMenuOpen(false)
+                      signOut()
+                    }}
+                    className="block w-full text-left text-lg font-medium text-red-600"
+                  >
+                    ログアウト
+                  </button>
+                </>
+              ) : (
+                <Link href="/auth/signin" onClick={() => setIsMobileMenuOpen(false)} className="block text-lg font-medium text-blue-600">
+                  サインイン
+                </Link>
+              )}
+            </div>
           </nav>
         </div>
       )}

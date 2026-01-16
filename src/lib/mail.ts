@@ -15,7 +15,7 @@ const transporter = nodemailer.createTransport({
   socketTimeout: 10000,
 })
 
-export type EmailTemplate = 'otp' | 'order_received' | 'order_completed' | 'message_received' | 'password_reset' | 'refund_issued' | 'payout_processed'
+export type EmailTemplate = 'otp' | 'order_received' | 'order_completed' | 'message_received' | 'password_reset' | 'refund_issued' | 'payout_processed' | 'negotiation_received' | 'negotiation_accepted'
 
 interface EmailOptions {
   to: string
@@ -132,6 +132,36 @@ export async function sendEmail({ to, subject, template, data }: EmailOptions) {
             <p style="font-size: 18px; font-weight: bold;">振込金額: ¥${data.amount.toLocaleString()}</p>
           </div>
           <p>口座への着金まで数営業日かかる場合があります。</p>
+        </div>
+      `
+      break
+    case 'negotiation_received':
+      html = `
+        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2>値下げ交渉が届きました</h2>
+          <p>${data.sellerName} 様</p>
+          <p>${data.buyerName} さんから以下のサービスについて値下げ交渉が届きました。</p>
+          <div style="border: 1px solid #e5e7eb; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <h3 style="margin-top: 0;">${data.serviceTitle}</h3>
+            <p>現在の価格: ¥${data.currentPrice.toLocaleString()}</p>
+            <p style="font-size: 18px; font-weight: bold; color: #dc2626;">提示価格: ¥${data.offerPrice.toLocaleString()}</p>
+          </div>
+          <a href="${process.env.NEXTAUTH_URL}/dashboard/negotiations" style="display: inline-block; background-color: #2563eb; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">交渉を確認する</a>
+        </div>
+      `
+      break
+    case 'negotiation_accepted':
+      html = `
+        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2>値下げ交渉が承認されました！</h2>
+          <p>${data.buyerName} 様</p>
+          <p>${data.sellerName} さんが以下の交渉を承認しました。</p>
+          <div style="border: 1px solid #e5e7eb; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <h3 style="margin-top: 0;">${data.serviceTitle}</h3>
+            <p style="font-size: 18px; font-weight: bold; color: #16a34a;">合意価格: ¥${data.price.toLocaleString()}</p>
+          </div>
+          <p>以下のリンクから購入手続きを進めてください。</p>
+          <a href="${process.env.NEXTAUTH_URL}/orders/${data.orderId}" style="display: inline-block; background-color: #16a34a; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">購入手続きへ進む</a>
         </div>
       `
       break

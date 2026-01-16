@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Edit3, Mail, Calendar, MapPin, Star, Briefcase } from 'lucide-react'
+import { Edit3, Mail, Calendar, MapPin, Star, Briefcase, Loader2 } from 'lucide-react'
 
 interface UserProfile {
   id: string
@@ -26,16 +26,18 @@ interface UserProfile {
 }
 
 export default function ProfilePage() {
-  const { data: session, status } = useSession()
+  const { data: session, status, update } = useSession()
   const router = useRouter()
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const [isEditing, setIsEditing] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
   const [editForm, setEditForm] = useState({
     name: '',
     bio: '',
     location: '',
-    website: ''
+    website: '',
+    image: ''
   })
 
   useEffect(() => {
@@ -58,7 +60,8 @@ export default function ProfilePage() {
           name: data.name || '',
           bio: data.bio || '',
           location: data.location || '',
-          website: data.website || ''
+          website: data.website || '',
+          image: data.image || ''
         })
       }
     } catch (error) {
@@ -69,6 +72,7 @@ export default function ProfilePage() {
   }
 
   const handleSave = async () => {
+    setIsSaving(true)
     try {
       const response = await fetch('/api/profile', {
         method: 'PUT',
@@ -81,6 +85,11 @@ export default function ProfilePage() {
       if (response.ok) {
         const updatedProfile = await response.json()
         setProfile(updatedProfile)
+
+        // ヘッダーのアイコンなどを即座に更新するためにセッションをリロード
+        // trigger: 'update' を渡すことで、auth.tsのjwtコールバック内でDBから最新情報を取得する処理を走らせる
+        await update({ trigger: 'update' })
+
         setIsEditing(false)
       } else {
         alert('プロフィールの更新に失敗しました')
@@ -88,6 +97,8 @@ export default function ProfilePage() {
     } catch (error) {
       console.error('Failed to update profile:', error)
       alert('プロフィールの更新に失敗しました')
+    } finally {
+      setIsSaving(false)
     }
   }
 
@@ -158,6 +169,45 @@ export default function ProfilePage() {
               <div className="space-y-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    プロフィール画像
+                  </label>
+                  <div className="flex items-center space-x-6">
+                    <div className="relative h-24 w-24">
+                      <Image
+                        src={editForm.image || '/images/default-avatar.svg'}
+                        alt="Preview"
+                        fill
+                        className="rounded-full object-cover border-4 border-white shadow-sm"
+                        unoptimized
+                      />
+                    </div>
+                    <label className="cursor-pointer bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
+                      <span className="text-sm text-gray-700 dark:text-gray-200">画像を変更</span>
+                      <input
+                        type="file"
+                        className="hidden"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0]
+                          if (file) {
+                            if (file.size > 2 * 1024 * 1024) {
+                              alert('画像サイズは2MB以下にしてください')
+                              return
+                            }
+                            const reader = new FileReader()
+                            reader.onloadend = () => {
+                              setEditForm(prev => ({ ...prev, image: reader.result as string }))
+                            }
+                            reader.readAsDataURL(file)
+                          }
+                        }}
+                      />
+                    </label>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     名前
                   </label>
                   <input
@@ -210,13 +260,16 @@ export default function ProfilePage() {
                 <div className="flex space-x-4">
                   <button
                     onClick={handleSave}
-                    className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                    disabled={isSaving}
+                    className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                   >
+                    {isSaving && <Loader2 className="w-4 h-4 animate-spin" />}
                     保存
                   </button>
                   <button
                     onClick={() => setIsEditing(false)}
-                    className="px-6 py-2 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-md hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors"
+                    disabled={isSaving}
+                    className="px-6 py-2 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-md hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors disabled:opacity-50"
                   >
                     キャンセル
                   </button>

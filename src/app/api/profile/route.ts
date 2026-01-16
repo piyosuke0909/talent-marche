@@ -5,7 +5,7 @@ import { prisma } from "@/lib/db"
 export async function GET() {
   try {
     const session = await getServerAuthSession()
-    
+
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
@@ -39,7 +39,7 @@ export async function GET() {
     }
 
     // 平均評価を計算
-    const averageRating = profile.reviews.length > 0 
+    const averageRating = profile.reviews.length > 0
       ? profile.reviews.reduce((sum, review) => sum + review.rating, 0) / profile.reviews.length
       : 0
 
@@ -47,7 +47,7 @@ export async function GET() {
     const { password: _password, reviews: _reviews, ...profileData } = profile
     void _password
     void _reviews
-    
+
     return NextResponse.json({
       ...profileData,
       averageRating
@@ -64,13 +64,13 @@ export async function GET() {
 export async function PUT(request: Request) {
   try {
     const session = await getServerAuthSession()
-    
+
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
     const body = await request.json()
-    const { name, bio, location, website } = body
+    const { name, bio, location, website, image } = body
 
     const updatedProfile = await prisma.user.update({
       where: {
@@ -80,7 +80,8 @@ export async function PUT(request: Request) {
         name: name || undefined,
         bio: bio || undefined,
         location: location || undefined,
-        website: website || undefined
+        website: website || undefined,
+        image: image || undefined
       },
       include: {
         _count: {
@@ -103,7 +104,7 @@ export async function PUT(request: Request) {
     })
 
     // 平均評価を計算
-    const averageRating = updatedProfile.reviews.length > 0 
+    const averageRating = updatedProfile.reviews.length > 0
       ? updatedProfile.reviews.reduce((sum, review) => sum + review.rating, 0) / updatedProfile.reviews.length
       : 0
 

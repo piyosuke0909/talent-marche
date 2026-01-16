@@ -99,8 +99,8 @@ export default async function CategoryPage({ params }: PageProps) {
                 <div className="mt-3 flex items-center justify-between text-sm text-gray-500">
                   <div className="flex items-center">
                     <Image
-                      src={service.user.image || '/images/default-avatar.png'}
-                      alt={service.user.name || service.user.username}
+                      src={service.user.image || '/images/default-avatar.svg'}
+                      alt={service.user.name || service.user.username || 'User'}
                       width={24}
                       height={24}
                       className="mr-2 h-6 w-6 rounded-full object-cover"

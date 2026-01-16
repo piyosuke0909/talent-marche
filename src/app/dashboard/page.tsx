@@ -90,6 +90,19 @@ function DashboardPageContent() {
     }
   }
 
+  // Placeholder for icons, assuming they are imported or defined elsewhere
+  const User = () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>;
+  const ShoppingBag = () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>;
+  const Settings = () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>;
+  const Wallet = () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>;
+
+  const navigation = [
+    { name: 'プロフィール編集', href: '/profile', icon: User, color: 'text-blue-600', bg: 'bg-blue-100' },
+    { name: '出品サービス管理', href: '/dashboard/services', icon: ShoppingBag, color: 'text-purple-600', bg: 'bg-purple-100' },
+    { name: '値下げ交渉一覧', href: '/dashboard/negotiations', icon: Settings, color: 'text-orange-600', bg: 'bg-orange-100' }, // Used Settings icon as temporary
+    { name: '売上管理・振込申請', href: '/dashboard/wallet', icon: Wallet, color: 'text-green-600', bg: 'bg-green-100' },
+  ]
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'pending':
@@ -212,7 +225,7 @@ function DashboardPageContent() {
                   <div key={order.id} className="flex items-center justify-between p-4 border dark:border-gray-700 rounded-lg">
                     <div className="flex items-center">
                       <Image
-                        src={order.buyer.image || '/images/default-avatar.png'}
+                        src={order.buyer.image || '/images/default-avatar.svg'}
                         alt={order.buyer.name}
                         width={40}
                         height={40}

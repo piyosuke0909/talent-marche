@@ -4,13 +4,13 @@ import { prisma } from '@/lib/db'
 import OrderDetailClient from '@/components/orders/OrderDetailClient'
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 export default async function OrderDetailPage({ params }: RouteParams) {
-  const { id } = params
+  const { id } = await params
   const session = await getServerAuthSession()
 
   if (!session?.user?.id) {

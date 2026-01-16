@@ -94,9 +94,9 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       createdAt: review.createdAt.toISOString(),
       reviewer: {
         id: review.reviewer.id,
-        username: review.reviewer.username,
-        name: review.reviewer.name,
-        image: review.reviewer.image,
+        username: review.reviewer.username || "Unknown", // Default since UI expects string
+        name: review.reviewer.name || null,
+        image: review.reviewer.image || null,
       },
     }))
 
@@ -109,7 +109,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       deliveryDays: service.deliveryDays,
       user: {
         id: service.user.id,
-        username: service.user.username,
+        username: service.user.username || "Unknown",
         name: service.user.name,
         image: service.user.image,
         bio: service.user.bio,

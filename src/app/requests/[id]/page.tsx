@@ -343,7 +343,7 @@ function RequestDetailContent({ params }: { params: Promise<{ id: string }> }) {
                                             <div className="flex items-center">
                                                 <div className="relative w-10 h-10 mr-3">
                                                     <Image
-                                                        src={proposal.user.image || '/images/default-avatar.png'}
+                                                        src={proposal.user.image || '/images/default-avatar.svg'}
                                                         alt={proposal.user.name}
                                                         fill
                                                         className="rounded-full object-cover"
@@ -392,7 +392,7 @@ function RequestDetailContent({ params }: { params: Promise<{ id: string }> }) {
                         <div className="flex items-center mb-4">
                             <div className="relative w-16 h-16 mr-4">
                                 <Image
-                                    src={request.user.image || '/images/default-avatar.png'}
+                                    src={request.user.image || '/images/default-avatar.svg'}
                                     alt={request.user.name}
                                     fill
                                     className="rounded-full object-cover"

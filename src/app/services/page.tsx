@@ -213,7 +213,7 @@ function ServicesContent() {
                 <div className="p-4">
                   <div className="flex items-center mb-2">
                     <Image
-                      src={service.user.image || '/images/default-avatar.png'}
+                      src={service.user.image || '/images/default-avatar.svg'}
                       alt={service.user.name || service.user.username}
                       width={24}
                       height={24}

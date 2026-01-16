@@ -119,6 +119,11 @@ export default function OrderDetailClient({ initialOrder, currentUserId }: Order
   const [feedback, setFeedback] = useState<string | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
+  // Delivery States
+  const [isDeliveryModalOpen, setIsDeliveryModalOpen] = useState(false)
+  const [deliveryMessage, setDeliveryMessage] = useState('')
+  const [isDelivering, setIsDelivering] = useState(false)
+
   const isSeller = order.sellerId === currentUserId
   const counterparty = isSeller ? order.buyer : order.seller
 
@@ -183,6 +188,46 @@ export default function OrderDetailClient({ initialOrder, currentUserId }: Order
       setErrorMessage((error as Error).message)
     } finally {
       setUpdatingStatus(null)
+    }
+  }
+
+  const handleDelivery = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsDelivering(true)
+    setErrorMessage(null)
+
+    try {
+      // 1. Send Message
+      const msgRes = await fetch('/api/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          receiverId: order.buyerId,
+          content: `【納品報告】\n${deliveryMessage}`,
+          orderId: order.id, // Creating relationship to order
+        }),
+      })
+
+      if (!msgRes.ok) throw new Error('メッセージの送信に失敗しました')
+
+      // 2. Update Status to COMPLETED
+      const statusRes = await fetch(`/api/orders/${order.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'COMPLETED' }),
+      })
+
+      if (!statusRes.ok) throw new Error('ステータスの更新に失敗しました')
+
+      // 3. Refresh
+      await refreshOrder()
+      setFeedback('納品が完了しました！')
+      setIsDeliveryModalOpen(false)
+      setDeliveryMessage('')
+    } catch (err) {
+      setErrorMessage((err as Error).message)
+    } finally {
+      setIsDelivering(false)
     }
   }
 
@@ -497,6 +542,17 @@ export default function OrderDetailClient({ initialOrder, currentUserId }: Order
             <p className="mt-2 text-sm text-gray-600">
               状況に応じてステータスを更新できます。更新すると相手に通知されます。
             </p>
+
+            {/* Delivery Button for Seller */}
+            {isSeller && order.status === 'IN_PROGRESS' && (
+              <button
+                onClick={() => setIsDeliveryModalOpen(true)}
+                className="mb-3 flex w-full items-center justify-center rounded-full bg-blue-600 px-4 py-3 text-sm font-bold text-white hover:bg-blue-700 transition shadow-md"
+              >
+                <ClipboardList className="mr-2 h-5 w-5" />
+                作品を納品する
+              </button>
+            )}
 
             {availableStatusActions.length === 0 ? (
               <div className="mt-4 rounded-lg border border-gray-100 bg-gray-50 p-4 text-sm text-gray-500">

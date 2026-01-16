@@ -3,6 +3,8 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Star, Heart, Clock, User, MessageCircle } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
+import NegotiationButton from '@/components/services/NegotiationButton'
+import MobileActionBar from '@/components/services/MobileActionBar'
 import { prisma } from '@/lib/db'
 import { getServerAuthSession } from '@/lib/auth'
 import type { ServiceDetail, ServiceReviewSummary } from '@/types'
@@ -259,8 +261,8 @@ export default async function ServicePage({ params }: ServicePageProps) {
                                 <Star
                                   key={i}
                                   className={`w-4 h-4 ${i < review.rating
-                                      ? 'text-yellow-400 fill-current'
-                                      : 'text-gray-300 dark:text-gray-600'
+                                    ? 'text-yellow-400 fill-current'
+                                    : 'text-gray-300 dark:text-gray-600'
                                     }`}
                                 />
                               ))}
@@ -353,6 +355,12 @@ export default async function ServicePage({ params }: ServicePageProps) {
                         質問する
                       </Button>
                     </Link>
+                    <NegotiationButton
+                      serviceId={service.id}
+                      currentPrice={service.price}
+                      sellerId={service.userId}
+                      currentUserId={session?.user?.id}
+                    />
                   </>
                 ) : (
                   <div className="text-center py-4 text-gray-500 dark:text-gray-400">
@@ -369,6 +377,25 @@ export default async function ServicePage({ params }: ServicePageProps) {
           </div>
         </div>
       </div>
+
+      {/* Mobile Action Bar */}
+      {!isOwner && (
+        <MobileActionBar price={service.price}>
+          <Link href={`/checkout?serviceId=${service.id}`} className="flex-1">
+            <Button className="w-full bg-green-600 hover:bg-green-700 text-white">
+              注文する
+            </Button>
+          </Link>
+          <div className="flex-1">
+            <NegotiationButton
+              serviceId={service.id}
+              currentPrice={service.price}
+              sellerId={service.userId}
+              currentUserId={session?.user?.id}
+            />
+          </div>
+        </MobileActionBar>
+      )}
     </div>
   )
 }

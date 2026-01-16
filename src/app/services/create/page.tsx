@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 
 interface Category {
   id: string
@@ -27,6 +28,7 @@ export default function CreateServicePage() {
   const [isLoading, setIsLoading] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
   const [showPayoutModal, setShowPayoutModal] = useState(false)
+  const { data: session } = useSession() // We need session for user ID (path construction)
 
   useEffect(() => {
     const checkEligibility = async () => {
@@ -72,7 +74,7 @@ export default function CreateServicePage() {
     const newImages = [...images, ...files]
     setImages(newImages)
 
-    // プレビュー画像を生成
+    // プレビュー画像を生成 (For preview only, using object URL is better for memory but FileReader is fine here)
     files.forEach(file => {
       const reader = new FileReader()
       reader.onload = (e) => {
@@ -98,9 +100,21 @@ export default function CreateServicePage() {
     setIsLoading(true)
 
     try {
-      // Base64形式の画像をそのまま送信
-      // 注意: データサイズが大きくなるため、本番環境では推奨されません
-      const imageUrls = imagePreviews
+      // Import dynamically to avoid server-side issues if any
+      const { uploadImage } = await import('@/lib/storage')
+
+      const imageUrls: string[] = []
+
+      if (images.length > 0) {
+        // Upload images in parallel
+        const uploadPromises = images.map(file => {
+          const path = `services/${session?.user?.id || 'anonymous'}/${Date.now()}_${file.name}`
+          return uploadImage(file, path)
+        })
+
+        const urls = await Promise.all(uploadPromises)
+        imageUrls.push(...urls)
+      }
 
       const response = await fetch('/api/services', {
         method: 'POST',

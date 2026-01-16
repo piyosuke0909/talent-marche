@@ -281,7 +281,7 @@ function CheckoutContent() {
 
       // 3D Secure Handling
       if (paymentResult.action === 'three_d_secure' && paymentResult.chargeId) {
-        // @ts-ignore - payjp type definition might be missing openThreeDSecure
+
         const tdsResult = await payjpInstance.openThreeDSecure(paymentResult.chargeId)
 
         if (!tdsResult) {
@@ -365,7 +365,7 @@ function CheckoutContent() {
             <div className="rounded-2xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow transition-colors duration-200">
               <div className="mb-4 flex items-center">
                 <Image
-                  src={service.images[0] || '/images/default-avatar.png'}
+                  src={service.images[0] || '/images/default-avatar.svg'}
                   alt={service.title}
                   width={80}
                   height={80}

@@ -122,7 +122,7 @@ export default async function RequestDetailPage({ params }: PageProps) {
             <h3 className="text-sm font-semibold text-gray-900">依頼者</h3>
             <div className="mt-3 flex items-center">
               <Image
-                src={request.user.image || '/images/default-avatar.png'}
+                src={request.user.image || '/images/default-avatar.svg'}
                 alt={request.user.name || '依頼者'}
                 width={48}
                 height={48}
@@ -153,7 +153,7 @@ export default async function RequestDetailPage({ params }: PageProps) {
               <li key={proposal.id} className="rounded-xl border border-gray-100 p-4">
                 <div className="mb-2 flex items-center">
                   <Image
-                    src={proposal.user.image || '/images/default-avatar.png'}
+                    src={proposal.user.image || '/images/default-avatar.svg'}
                     alt={proposal.user.name || '提案者'}
                     width={32}
                     height={32}

@@ -16,6 +16,9 @@ export default function Footer() {
             <Link href="/commercial" className="hover:text-gray-900">
               特商法に基づく表記
             </Link>
+            <Link href="/contact" className="hover:text-gray-900 font-medium text-blue-600">
+              お問い合わせ
+            </Link>
           </div>
         </div>
       </div>

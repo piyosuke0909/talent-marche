@@ -41,7 +41,9 @@ model User {
   proposals   Proposal[]
   favorites   Favorite[]
   payouts     Payout[]
+
   notifications Notification[]
+  negotiations PriceNegotiation[]
 
   @@map("users")
 }
@@ -150,7 +152,9 @@ model Service {
   category   Category  @relation(fields: [categoryId], references: [id])
   orders     Order[]
   reviews    Review[]
+
   favorites  Favorite[]
+  negotiations PriceNegotiation[]
 
   @@map("services")
 }
@@ -276,4 +280,34 @@ model Favorite {
 
   @@unique([userId, serviceId])
   @@map("favorites")
+}
+
+model Inquiry {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  email     String
+  subject   String
+  message   String
+  status    String   @default("PENDING") // PENDING, RESOLVED
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("inquiries")
+}
+
+model PriceNegotiation {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  price     Int
+  status    String   @default("PENDING") // PENDING, ACCEPTED, REJECTED
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  serviceId String   @db.ObjectId
+  userId    String   @db.ObjectId // Buyer
+  service   Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([serviceId, userId])
+  @@map("price_negotiations")
 }

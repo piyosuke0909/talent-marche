@@ -2,7 +2,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
+
 
 const SYSTEM_PROMPT = `
 あなたは「Talent Marche（タレントマルシェ）」のAIアシスタント「Marche（マルシェ）」です。
@@ -40,7 +40,8 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+        const genAI = new GoogleGenerativeAI(apiKey);
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
         // 履歴のフォーマット変換
         const formattedHistory = history.map((msg: any) => ({
@@ -107,11 +108,21 @@ USER_IDは上記のリストにあるIDを使用してください。もしリ�
         const text = response.text();
 
         return NextResponse.json({ reply: text });
-    } catch (error) {
+    } catch (error: any) {
+        console.error("DEBUG_GEMINI_ERROR:", error);
+
+        // Check for 429 or Quota Exceeded errors
+        if (error.message?.includes('429') || error.message?.includes('Quota exceeded') || error.status === 429) {
+            console.warn("Gemini API Rate Limit Hit (429) - Returning polite message to user.");
+            return NextResponse.json({
+                reply: "申し訳ありません。現在、AIへのアクセスが集中しており、一時的に利用制限がかかっています。\n\n少し時間を置いてから（数分後）、もう一度話しかけてみてください。🙏"
+            });
+        }
+
         console.error("Gemini API Error:", error);
-        return NextResponse.json(
-            { error: "AIとの通信に失敗しました" },
-            { status: 500 }
-        );
+
+        return NextResponse.json({
+            reply: "申し訳ありません。AIとの通信中にエラーが発生しました。\n\nしばらく待ってから再度お試しください。"
+        });
     }
 }
