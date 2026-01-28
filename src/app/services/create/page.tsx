@@ -64,7 +64,7 @@ export default function CreateServicePage() {
     }
   }
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
     if (images.length + files.length > 4) {
       alert('画像は最大4枚までアップロードできます')
@@ -74,13 +74,10 @@ export default function CreateServicePage() {
     const newImages = [...images, ...files]
     setImages(newImages)
 
-    // プレビュー画像を生成 (For preview only, using object URL is better for memory but FileReader is fine here)
+    // Generate previews (using ObjectURL for instant preview)
     files.forEach(file => {
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        setImagePreviews(prev => [...prev, e.target?.result as string])
-      }
-      reader.readAsDataURL(file)
+      const url = URL.createObjectURL(file)
+      setImagePreviews(prev => [...prev, url])
     })
   }
 
@@ -100,20 +97,18 @@ export default function CreateServicePage() {
     setIsLoading(true)
 
     try {
-      // Import dynamically to avoid server-side issues if any
-      const { uploadImage } = await import('@/lib/storage')
+      // Import the compression helper dynamically
+      const { compressImageToBase64 } = await import('@/lib/image')
 
-      const imageUrls: string[] = []
+      const compressedImageStrings: string[] = []
 
       if (images.length > 0) {
-        // Upload images in parallel
-        const uploadPromises = images.map(file => {
-          const path = `services/${session?.user?.id || 'anonymous'}/${Date.now()}_${file.name}`
-          return uploadImage(file, path)
-        })
-
-        const urls = await Promise.all(uploadPromises)
-        imageUrls.push(...urls)
+        // Compress all images to Base64 in parallel
+        const compressionPromises = images.map(file =>
+          compressImageToBase64(file, 800, 0.6)
+        )
+        const results = await Promise.all(compressionPromises)
+        compressedImageStrings.push(...results)
       }
 
       const response = await fetch('/api/services', {
@@ -125,7 +120,7 @@ export default function CreateServicePage() {
           ...formData,
           price: parseInt(formData.price),
           deliveryDays: parseInt(formData.deliveryDays) || 7,
-          images: imageUrls
+          images: compressedImageStrings // Send compressed Base64 strings
         }),
       })
 

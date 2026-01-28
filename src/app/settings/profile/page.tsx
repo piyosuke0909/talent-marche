@@ -67,8 +67,9 @@ export default function ProfileSettingsPage() {
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
         if (file) {
-            if (file.size > 2 * 1024 * 1024) { // 2MB limit
-                alert('画像サイズは2MB以下にしてください')
+            // Check size first (before compression) to avoid huge processing
+            if (file.size > 10 * 1024 * 1024) { // 10MB limit (relaxed since we compress)
+                alert('画像サイズは10MB以下にしてください')
                 return
             }
 
@@ -88,14 +89,13 @@ export default function ProfileSettingsPage() {
         setMessage(null)
 
         try {
-            let imageUrl = profile.image
+            let imageUrl = profile.image // Keep existing image by default
 
             if (imageFile) {
-                const { uploadImage } = await import('@/lib/storage')
-                // Use a consistent path for the user's avatar to overwrite old one or manage versions
-                // We'll use timestamp to bust cache
-                const path = `avatars/${(profile as any).id || 'user'}/${Date.now()}_${imageFile.name}`
-                imageUrl = await uploadImage(imageFile, path)
+                const { compressImageToBase64 } = await import('@/lib/image')
+                // Compress to Base64
+                // Use slightly higher quality for avatars usually, but 0.6 is fine
+                imageUrl = await compressImageToBase64(imageFile, 400, 0.7)
             }
 
             const response = await fetch('/api/user/profile', {
