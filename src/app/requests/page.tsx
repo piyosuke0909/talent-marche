@@ -250,21 +250,21 @@ function RequestsContent() {
         <div className="space-y-4">
           {requests.map((request) => (
             <Link key={request.id} href={`/requests/${request.id}`}>
-              <div className="rounded-lg bg-white dark:bg-gray-800 p-6 shadow transition hover:shadow-lg dark:hover:bg-gray-750">
+              <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-md transition-all duration-300 hover:scale-[1.01] hover:border-blue-300 hover:shadow-xl dark:border-gray-700 dark:bg-gray-800 dark:hover:border-blue-700">
                 <div className="mb-4 flex items-start justify-between">
                   <div className="flex-1">
                     <div className="mb-2 flex items-center">
-                      <span className="mr-2 inline-flex rounded bg-blue-100 dark:bg-blue-900/30 px-2 py-0.5 text-xs font-semibold text-blue-700 dark:text-blue-300">
+                      <span className="mr-2 inline-flex rounded bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
                         {request.category.name}
                       </span>
                       <span className="text-xs text-gray-500 dark:text-gray-400">{formatCreatedAt(request.createdAt)}</span>
                     </div>
-                    <h3 className="mb-2 text-lg font-bold text-gray-900 dark:text-white">{request.title}</h3>
+                    <h3 className="mb-2 text-xl font-bold text-gray-900 dark:text-white group-hover:text-blue-600">{request.title}</h3>
                     <p className="mb-4 line-clamp-2 text-sm text-gray-600 dark:text-gray-300">{request.description}</p>
                     {request.skills.length > 0 && (
                       <div className="mb-4 flex flex-wrap gap-2">
                         {request.skills.map((skill) => (
-                          <span key={skill} className="rounded-full bg-gray-100 dark:bg-gray-700 px-2 py-0.5 text-xs text-gray-700 dark:text-gray-300">
+                          <span key={skill} className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700 dark:bg-gray-700 dark:text-gray-300">
                             {skill}
                           </span>
                         ))}
@@ -276,21 +276,27 @@ function RequestsContent() {
                         alt={request.user.name || 'request owner'}
                         width={24}
                         height={24}
-                        className="mr-2 h-6 w-6 rounded-full object-cover"
+                        className="mr-2 h-6 w-6 rounded-full object-cover shadow-sm"
                       />
-                      <span>{request.user.name}</span>
+                      <span className="font-medium">{request.user.name}</span>
                       {request.location && (
                         <>
-                          <span className="mx-2">•</span>
+                          <span className="mx-2 text-gray-300">•</span>
                           <span>{request.location}</span>
                         </>
                       )}
                     </div>
                   </div>
-                  <div className="ml-4 text-right">
-                    <div className="mb-2 text-2xl font-bold text-green-600 dark:text-green-400">¥{request.budget.toLocaleString()}</div>
+                  <div className="ml-6 flex min-w-[120px] flex-col items-end text-right">
+                    <div className="mb-1 text-2xl font-bold text-green-600 dark:text-green-400">¥{request.budget.toLocaleString()}</div>
+                    <div className="mb-2 text-xs font-medium text-gray-500 dark:text-gray-400">
+                      予算
+                    </div>
                     <div className="text-sm text-gray-500 dark:text-gray-400">納期: {formatDeadline(request.deadline)}</div>
-                    <div className="text-sm text-blue-600 dark:text-blue-400">
+                    <div className="mt-2 inline-flex items-center text-sm font-medium text-blue-600 dark:text-blue-400">
+                      <svg className="mr-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                      </svg>
                       {(request.proposalCount ?? 0).toLocaleString()}件の提案
                     </div>
                   </div>
