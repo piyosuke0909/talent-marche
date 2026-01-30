@@ -91,8 +91,10 @@ export async function POST(
       const tenantId = order.seller.payjpTenantId
       const isTenantPayment = !!tenantId
 
+      let chargeData: any = null
+
       try {
-        const chargeData: any = {
+        chargeData = {
           amount: order.totalAmount,
           currency: "jpy",
           card: body.tokenId!,
@@ -155,15 +157,71 @@ export async function POST(
         }
 
         paymentReference = charge.id
-      } catch (error) {
-        console.error("PAY.JP Charge Error:", error)
-        const message =
-          (error as { message?: string })?.message ||
-          "PAY.JPでの決済処理に失敗しました"
-        return NextResponse.json(
-          { error: message },
-          { status: 400 }
-        )
+      } catch (error: any) {
+        // Retry logic for "invalid_merchant_platform_fee"
+        // This handles cases where the tenant account is not compatible with platform fees
+        if (
+          isTenantPayment &&
+          error?.response?.body?.error?.code === 'invalid_merchant_platform_fee'
+        ) {
+          console.warn("Retrying payment without Tenant/PlatformFee due to configuration mismatch...")
+
+          // Remove tenant specific fields
+          delete chargeData.tenant
+          delete chargeData.platform_fee
+
+          try {
+            const charge = await payjp.charges.create(chargeData)
+            // Success on retry
+            console.log("Retry Charge Created:", JSON.stringify(charge, null, 2))
+
+            // 3D Secure flow (Copy of logic above)
+            const chargeResponse = charge as any
+            if (!charge.paid && chargeResponse.status === 'pending' && chargeResponse.three_d_secure_status === 'attempted') {
+              await prisma.order.update({
+                where: { id: orderId },
+                data: { paymentId: charge.id }
+              })
+              return NextResponse.json({
+                action: 'three_d_secure',
+                chargeId: charge.id,
+                message: '3Dセキュア認証が必要です'
+              }, { status: 200 })
+            }
+
+            if (charge.failure_code) {
+              throw new Error(charge.failure_message || 'Payment failed on retry')
+            }
+            if (!charge.id) {
+              throw new Error('Payment ID missing on retry')
+            }
+
+            paymentReference = charge.id
+            // Successful retry, proceed
+          } catch (retryError: any) {
+            console.error("Retry failed:", retryError)
+            const message = retryError?.message || "再試行にも失敗しました"
+            return NextResponse.json(
+              { error: `Payment Retry Failed: ${message}` },
+              { status: 400 }
+            )
+          }
+        } else {
+          console.error("PAY.JP Charge Error:", error)
+          // Detailed log for debugging
+          if (typeof error === 'object' && error !== null && 'response' in error) {
+            console.error("PAY.JP Response Body:", (error as any).response?.body)
+          }
+
+          const message =
+            (error as { message?: string })?.message ||
+            "PAY.JPでの決済処理に失敗しました"
+
+          return NextResponse.json(
+            { error: `Payment Failed: ${message}` },
+            { status: 400 }
+          )
+        }
       }
     }
 
