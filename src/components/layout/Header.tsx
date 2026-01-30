@@ -167,10 +167,10 @@ export default function Header() {
             出品する
           </Link>
           <Link
-            href="/requests/create"
-            className={`${pathname === '/requests/create' ? 'text-blue-600 font-bold' : 'text-gray-600 hover:text-gray-900'} transition-colors`}
+            href="/requests"
+            className={`${pathname === '/requests' ? 'text-blue-600 font-bold' : 'text-gray-600 hover:text-gray-900'} transition-colors`}
           >
-            依頼する
+            依頼一覧
           </Link>
           <Link
             href="/messages"
@@ -415,8 +415,8 @@ export default function Header() {
               <Link href="/services/create" onClick={() => setIsMobileMenuOpen(false)} className="block text-lg font-medium text-gray-800 dark:text-gray-200">
                 出品する
               </Link>
-              <Link href="/requests/create" onClick={() => setIsMobileMenuOpen(false)} className="block text-lg font-medium text-gray-800 dark:text-gray-200">
-                依頼する
+              <Link href="/requests" onClick={() => setIsMobileMenuOpen(false)} className="block text-lg font-medium text-gray-800 dark:text-gray-200">
+                依頼一覧
               </Link>
               <Link href="/services" onClick={() => setIsMobileMenuOpen(false)} className="block text-lg font-medium text-gray-800 dark:text-gray-200">
                 探す

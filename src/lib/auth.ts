@@ -38,9 +38,13 @@ export const authOptions = {
           return null
         }
 
-        const user = await prisma.user.findUnique({
+        // Check if input is email or username
+        const user = await prisma.user.findFirst({
           where: {
-            email: credentials.email
+            OR: [
+              { email: credentials.email },
+              { username: credentials.email }
+            ]
           }
         })
 

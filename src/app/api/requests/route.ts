@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { title, description, budget, categoryId, skills, deadline, location } = body
+    const { title, description, budget, categoryId, skills, deadline, location, images } = body
 
     if (!title || !description || !budget || !categoryId) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
@@ -52,6 +52,7 @@ export async function POST(request: NextRequest) {
         budget: Math.round(normalizedBudget),
         categoryId,
         skills: sanitizedSkills,
+        images: Array.isArray(images) ? images : [],
         deadline: deadline ? new Date(deadline) : null,
         location: location || null,
         userId: session.user.id,
@@ -161,6 +162,7 @@ export async function GET(request: NextRequest) {
         description: req.description,
         budget: req.budget,
         skills: req.skills,
+        images: req.images,
         deadline: req.deadline?.toISOString() ?? null,
         location: req.location,
         createdAt: req.createdAt.toISOString(),

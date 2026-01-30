@@ -166,6 +166,7 @@ model Request {
   budget      Int?
   deadline    DateTime?
   skills      String[]
+  images      String[]
   location    String?
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())

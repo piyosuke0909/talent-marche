@@ -27,6 +27,7 @@ interface RequestDetail {
     deadline: string | null
     location: string | null
     skills: string[]
+    images: string[]
     createdAt: string
     user: User
     category: {
@@ -220,6 +221,26 @@ function RequestDetailContent({ params }: { params: Promise<{ id: string }> }) {
                             <p className="whitespace-pre-wrap text-gray-700 leading-relaxed">
                                 {request.description}
                             </p>
+
+                            {request.images && request.images.length > 0 && (
+                                <div className="mt-6">
+                                    <h3 className="font-bold text-sm mb-2 text-gray-700">参考画像</h3>
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                        {request.images.map((image, index) => (
+                                            <div key={index} className="relative aspect-square rounded-lg overflow-hidden border border-gray-200 cursor-pointer hover:opacity-90 transition-opacity"
+                                                onClick={() => window.open(image, '_blank')}
+                                            >
+                                                <Image
+                                                    src={image}
+                                                    alt={`参考画像 ${index + 1}`}
+                                                    fill
+                                                    className="object-cover"
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         {request.skills.length > 0 && (

@@ -120,7 +120,7 @@ function SignInPageContent() {
               disabled={isLoading}
               className="w-full bg-gray-800 text-white font-bold py-3 px-4 rounded-lg hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-800 transition disabled:opacity-50"
             >
-              {isLoading ? 'ログイン中...' : 'メールアドレスでログイン'}
+              {isLoading ? 'ログイン中...' : 'ログイン'}
             </button>
           </div>
         </form>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { compressImageToBase64 } from '@/lib/image'
 
 export default function CreateRequestPage() {
   const router = useRouter()
@@ -12,7 +13,8 @@ export default function CreateRequestPage() {
     description: '',
     skills: [] as string[],
     deadline: '',
-    location: ''
+    location: '',
+    images: [] as string[]
   })
   const [titleCount, setTitleCount] = useState(0)
 
@@ -43,6 +45,33 @@ export default function CreateRequestPage() {
     }
   }
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (!files || files.length === 0) return
+
+    if (formData.images.length + files.length > 5) {
+      alert('画像は最大5枚までアップロードできます')
+      return
+    }
+
+    try {
+      const newImages = [...formData.images]
+      for (let i = 0; i < files.length; i++) {
+        const compressed = await compressImageToBase64(files[i])
+        newImages.push(compressed)
+      }
+      setFormData({ ...formData, images: newImages })
+    } catch (error) {
+      console.error('Image upload failed', error)
+      alert('画像のアップロードに失敗しました')
+    }
+  }
+
+  const removeImage = (index: number) => {
+    const newImages = formData.images.filter((_, i) => i !== index)
+    setFormData({ ...formData, images: newImages })
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -55,7 +84,8 @@ export default function CreateRequestPage() {
         body: JSON.stringify({
           ...formData,
           budget: formData.budget ? parseInt(formData.budget) : null,
-          deadline: formData.deadline ? new Date(formData.deadline) : null
+          deadline: formData.deadline ? new Date(formData.deadline) : null,
+          images: formData.images
         }),
       })
 
@@ -224,11 +254,49 @@ export default function CreateRequestPage() {
             </div>
 
             <div className="bg-white p-6 rounded-lg shadow-md mb-5">
-              <div className="flex items-center justify-between">
-                <div className="flex-1 flex items-center p-4 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-gray-400">
-                  <span className="text-gray-600">＋ ファイルをアップロード</span>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center">
+                  <label className="font-bold mr-2">参考画像</label>
+                  <span className="text-xs text-gray-500 ml-2">※最大5枚まで</span>
                 </div>
-                <span className="bg-gray-400 text-white text-xs px-2 py-1 rounded ml-5">任意</span>
+                <span className="bg-gray-400 text-white text-xs px-2 py-1 rounded">任意</span>
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-4">
+                {formData.images.map((image, index) => (
+                  <div key={index} className="relative aspect-square">
+                    <img
+                      src={image}
+                      alt={`Preview ${index + 1}`}
+                      className="w-full h-full object-cover rounded-lg border border-gray-200"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeImage(index)}
+                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md hover:bg-red-600"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                ))}
+
+                {formData.images.length < 5 && (
+                  <label className="border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-gray-400 hover:bg-gray-50 flex flex-col items-center justify-center aspect-square transition-colors">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={handleImageUpload}
+                      className="hidden"
+                    />
+                    <svg className="w-8 h-8 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                    <span className="text-xs text-gray-500">追加</span>
+                  </label>
+                )}
               </div>
             </div>
 
