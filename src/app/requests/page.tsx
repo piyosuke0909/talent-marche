@@ -13,6 +13,7 @@ interface RequestListItem {
   description: string
   budget: number
   skills: string[]
+  images?: string[]
   deadline: string | null
   location: string | null
   createdAt: string
@@ -247,57 +248,92 @@ function RequestsContent() {
           </button>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {requests.map((request) => (
             <Link key={request.id} href={`/requests/${request.id}`}>
-              <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-md transition-all duration-300 hover:scale-[1.01] hover:border-blue-300 hover:shadow-xl dark:border-gray-700 dark:bg-gray-800 dark:hover:border-blue-700">
-                <div className="mb-4 flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="mb-2 flex items-center">
-                      <span className="mr-2 inline-flex rounded bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
-                        {request.category.name}
-                      </span>
-                      <span className="text-xs text-gray-500 dark:text-gray-400">{formatCreatedAt(request.createdAt)}</span>
-                    </div>
-                    <h3 className="mb-2 text-xl font-bold text-gray-900 dark:text-white group-hover:text-blue-600">{request.title}</h3>
-                    <p className="mb-4 line-clamp-2 text-sm text-gray-600 dark:text-gray-300">{request.description}</p>
+              <div className="flex flex-col h-full bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-200 dark:bg-gray-800 dark:border-gray-700 border border-transparent hover:border-blue-300 dark:hover:border-blue-700">
+                {request.images && request.images.length > 0 && (
+                  <div className="aspect-video bg-gray-200 dark:bg-gray-700 overflow-hidden">
+                    <Image
+                      src={request.images[0]}
+                      alt={request.title}
+                      width={400}
+                      height={225}
+                      className="h-full w-full object-cover"
+                      unoptimized
+                    />
+                  </div>
+                )}
+                <div className="p-5 flex flex-col h-full">
+                  <div className="flex items-center space-x-2 mb-3">
+                    <span className="inline-flex rounded bg-blue-100 px-2.5 py-1 text-xs font-semibold text-blue-800 dark:bg-blue-900/50 dark:text-blue-200">
+                      {request.category.name}
+                    </span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                      {formatCreatedAt(request.createdAt)}
+                    </span>
+                  </div>
+
+                  <h3 className="mb-2 text-base font-bold text-gray-900 dark:text-white line-clamp-2 group-hover:text-blue-600">
+                    {request.title}
+                  </h3>
+
+                  <p className="mb-4 text-sm text-gray-600 dark:text-gray-300 line-clamp-3 flex-grow">
+                    {request.description}
+                  </p>
+
+                  <div className="mt-auto">
                     {request.skills.length > 0 && (
-                      <div className="mb-4 flex flex-wrap gap-2">
-                        {request.skills.map((skill) => (
+                      <div className="mb-4 flex flex-wrap gap-1.5">
+                        {request.skills.slice(0, 3).map((skill) => (
                           <span key={skill} className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700 dark:bg-gray-700 dark:text-gray-300">
                             {skill}
                           </span>
                         ))}
+                        {request.skills.length > 3 && (
+                          <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-500 dark:bg-gray-700 dark:text-gray-400">
+                            +{request.skills.length - 3}
+                          </span>
+                        )}
                       </div>
                     )}
-                    <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
+
+                    <div className="flex items-center mb-4 pb-4 border-b border-gray-100 dark:border-gray-700">
                       <Image
                         src={request.user.image || '/images/default-avatar.svg'}
                         alt={request.user.name || 'request owner'}
                         width={24}
                         height={24}
-                        className="mr-2 h-6 w-6 rounded-full object-cover shadow-sm"
+                        className="mr-2 h-6 w-6 rounded-full object-cover"
+                        unoptimized
                       />
-                      <span className="font-medium">{request.user.name}</span>
-                      {request.location && (
-                        <>
-                          <span className="mx-2 text-gray-300">•</span>
-                          <span>{request.location}</span>
-                        </>
-                      )}
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate pr-2">
+                        {request.user.name}
+                      </span>
                     </div>
-                  </div>
-                  <div className="ml-6 flex min-w-[120px] flex-col items-end text-right">
-                    <div className="mb-1 text-2xl font-bold text-green-600 dark:text-green-400">¥{request.budget.toLocaleString()}</div>
-                    <div className="mb-2 text-xs font-medium text-gray-500 dark:text-gray-400">
-                      予算
-                    </div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400">納期: {formatDeadline(request.deadline)}</div>
-                    <div className="mt-2 inline-flex items-center text-sm font-medium text-blue-600 dark:text-blue-400">
-                      <svg className="mr-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
-                      </svg>
-                      {(request.proposalCount ?? 0).toLocaleString()}件の提案
+
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center text-sm mb-1">
+                        <span className="text-gray-500 dark:text-gray-400">予算</span>
+                        <span className="text-lg font-bold text-green-600 dark:text-green-400">
+                          ¥{request.budget.toLocaleString()}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-gray-500 dark:text-gray-400">納期</span>
+                        <span className="text-gray-700 dark:text-gray-300 font-medium">
+                          {formatDeadline(request.deadline)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center text-sm pt-2">
+                        <span className="text-gray-500 dark:text-gray-400 text-xs">提案数</span>
+                        <span className="inline-flex items-center text-blue-600 dark:text-blue-400 font-medium text-sm">
+                          <svg className="mr-1 h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                          </svg>
+                          {(request.proposalCount ?? 0).toLocaleString()}件
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>

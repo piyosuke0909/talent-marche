@@ -1,0 +1,23 @@
+﻿src/app/api/auth/register/route.ts(61,7): error TS2322: Type '{ username: any; }' is not assignable to type 'UserWhereUniqueInput'.
+  Type '{ username: any; }' is not assignable to type '{ id: string; email: string; } & { id?: string | undefined; email?: string | undefined; AND?: UserWhereInput | UserWhereInput[] | undefined; OR?: UserWhereInput[] | undefined; ... 33 more ...; identityVerifications?: IdentityVerificationListRelationFilter | undefined; }'.
+    Type '{ username: any; }' is missing the following properties from type '{ id: string; email: string; }': id, email
+src/app/api/favorites/route.ts(53,11): error TS2322: Type '{ id: string; title: string; description: string; price: number; images: string[]; deliveryDays: number; user: { username: string | null; id: string; name: string | null; image: string | null; }; ... 4 more ...; favoriteCount: number; }[]' is not assignable to type 'ServiceListItem[]'.
+  Type '{ id: string; title: string; description: string; price: number; images: string[]; deliveryDays: number; user: { username: string | null; id: string; name: string | null; image: string | null; }; ... 4 more ...; favoriteCount: number; }' is not assignable to type 'ServiceListItem'.
+    The types of 'user.username' are incompatible between these types.
+      Type 'string | null' is not assignable to type 'string'.
+        Type 'null' is not assignable to type 'string'.
+src/app/api/services/[id]/route.ts(116,9): error TS2353: Object literal may only specify known properties, and 'isVerified' does not exist in type 'ServiceUserSummary & { bio: string | null; identityVerified: boolean; createdAt: string; }'.
+src/app/api/services/route.ts(130,11): error TS2322: Type '{ id: string; title: string; description: string; price: number; images: string[]; deliveryDays: number; user: { username: string | null; id: string; name: string | null; image: string | null; }; ... 4 more ...; favoriteCount: number; }[]' is not assignable to type 'ServiceListItem[]'.
+  Type '{ id: string; title: string; description: string; price: number; images: string[]; deliveryDays: number; user: { username: string | null; id: string; name: string | null; image: string | null; }; ... 4 more ...; favoriteCount: number; }' is not assignable to type 'ServiceListItem'.
+    The types of 'user.username' are incompatible between these types.
+      Type 'string | null' is not assignable to type 'string'.
+        Type 'null' is not assignable to type 'string'.
+src/app/services/[id]/page.tsx(77,9): error TS2322: Type '{ id: string; rating: number; comment: string | null; createdAt: string; reviewer: { id: string; username: string | null; name: string | null; image: string | null; }; }[]' is not assignable to type 'ServiceReviewSummary[]'.
+  Type '{ id: string; rating: number; comment: string | null; createdAt: string; reviewer: { id: string; username: string | null; name: string | null; image: string | null; }; }' is not assignable to type 'ServiceReviewSummary'.
+    The types of 'reviewer.username' are incompatible between these types.
+      Type 'string | null' is not assignable to type 'string'.
+        Type 'null' is not assignable to type 'string'.
+src/app/services/[id]/page.tsx(99,7): error TS2322: Type 'string | null' is not assignable to type 'string'.
+  Type 'null' is not assignable to type 'string'.
+src/app/users/[id]/page.tsx(130,15): error TS2322: Type 'string | null' is not assignable to type 'string'.
+  Type 'null' is not assignable to type 'string'.

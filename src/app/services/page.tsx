@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import type { CategorySummary, ServiceListItem, ServicesResponse } from '@/types'
+import FavoriteButton from '@/components/FavoriteButton'
 
 export const dynamic = 'force-dynamic'
 
@@ -189,8 +190,12 @@ function ServicesContent() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {services.map((service) => (
-            <Link key={service.id} href={`/services/${service.id}`}>
-              <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-200">
+            <div key={service.id} className="relative bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-200 group">
+              <div className="absolute top-2 right-2 z-10 transition-opacity duration-200">
+                <FavoriteButton serviceId={service.id} className="bg-white/80 backdrop-blur-sm hover:bg-white shadow-sm" />
+              </div>
+              <Link href={`/services/${service.id}`} className="block h-full">
+
                 <div className="aspect-video bg-gray-200 overflow-hidden">
                   {service.images && service.images.length > 0 ? (
                     <Image
@@ -198,11 +203,11 @@ function ServicesContent() {
                       alt={service.title}
                       width={400}
                       height={225}
-                      className="h-full w-full object-cover"
+                      className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
                       unoptimized
                     />
                   ) : (
-                    <div className="w-full h-full bg-gray-300 flex items-center justify-center">
+                    <div className="w-full h-full bg-gray-300 flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
                       <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                       </svg>
@@ -210,46 +215,48 @@ function ServicesContent() {
                   )}
                 </div>
 
-                <div className="p-4">
-                  <div className="flex items-center mb-2">
+                <div className="p-4 flex flex-col h-[calc(100%-56.25%)]">
+                  <div className="flex items-center mb-2 shrink-0">
                     <Image
                       src={service.user.image || '/images/default-avatar.svg'}
-                      alt={service.user.name || service.user.username}
+                      alt={service.user.name || service.user.username || 'ユーザー'}
                       width={24}
                       height={24}
                       className="mr-2 h-6 w-6 rounded-full object-cover"
                       unoptimized
                     />
-                    <span className="text-sm text-gray-600">{service.user.name || service.user.username}</span>
+                    <span className="text-sm text-gray-600 truncate">{service.user.name || service.user.username}</span>
                   </div>
 
-                  <h3 className="text-sm font-medium text-gray-900 mb-2 line-clamp-2">
+                  <h3 className="text-sm font-medium text-gray-900 mb-2 line-clamp-2 shrink-0">
                     {service.title}
                   </h3>
+                  
+                  <div className="mt-auto">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded truncate max-w-[50%]">
+                        {service.category.name}
+                      </span>
+                      <div className="flex items-center text-sm text-gray-500 shrink-0">
+                        <svg className="w-4 h-4 text-yellow-400 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                        </svg>
+                        {service.averageRating.toFixed(1)} ({service.totalReviews})
+                      </div>
+                    </div>
 
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
-                      {service.category.name}
-                    </span>
-                    <div className="flex items-center text-sm text-gray-500">
-                      <svg className="w-4 h-4 text-yellow-400 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                      {service.averageRating.toFixed(1)} ({service.totalReviews})
+                    <div className="flex items-center justify-between">
+                      <span className="text-lg font-bold text-gray-900 truncate">
+                        ¥{service.price.toLocaleString()}
+                      </span>
+                      <span className="text-sm text-gray-500 shrink-0">
+                        {service.deliveryDays}日で納品
+                      </span>
                     </div>
                   </div>
-
-                  <div className="flex items-center justify-between">
-                    <span className="text-lg font-bold text-gray-900">
-                      ¥{service.price.toLocaleString()}
-                    </span>
-                    <span className="text-sm text-gray-500">
-                      {service.deliveryDays}日で納品
-                    </span>
-                  </div>
                 </div>
-              </div>
-            </Link>
+              </Link>
+            </div>
           ))}
         </div>
       )}

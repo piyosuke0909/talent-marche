@@ -139,7 +139,7 @@ export default function MessagesPage() {
               <div className="relative h-14 w-14 flex-shrink-0">
                 <Image
                   src={conversation.user.image || '/images/default-avatar.svg'}
-                  alt={conversation.user.name || conversation.user.username}
+                  alt={conversation.user.name || conversation.user.username || 'ユーザー'}
                   fill
                   sizes="56px"
                   className="rounded-full object-cover"

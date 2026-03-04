@@ -144,7 +144,7 @@ function NewOrderContent() {
             <div className="flex items-center mb-4">
               <Image
                 src={service.user.image || '/images/default-avatar.svg'}
-                alt={service.user.name || service.user.username}
+                alt={service.user.name || service.user.username || 'ユーザー'}
                 width={40}
                 height={40}
                 className="mr-3 h-10 w-10 rounded-full object-cover"

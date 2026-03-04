@@ -1,6 +1,7 @@
 ﻿import { notFound } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
+import { ShieldCheck, ShieldAlert } from 'lucide-react'
 import { prisma } from '@/lib/db'
 import { getServerAuthSession } from '@/lib/auth'
 import { formatPrice } from '@/lib/utils'
@@ -24,7 +25,7 @@ async function getPublicProfile(userId: string) {
         location: true,
         image: true,
         createdAt: true,
-        isVerified: true,
+        identityVerified: true,
         skills: true,
         _count: {
           select: {
@@ -88,7 +89,20 @@ export default async function PublicProfilePage({ params }: PageProps) {
         <div>
           <p className="text-sm uppercase tracking-wide text-gray-500">クリエイタープロフィール</p>
           <h1 className="text-3xl font-bold text-gray-900">{user.name || user.username}</h1>
-          <p className="text-sm text-gray-500">@{user.username}</p>
+          <div className="flex items-center gap-2 mt-2">
+            <p className="text-sm text-gray-500">@{user.username}</p>
+            {user.identityVerified ? (
+              <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 px-2 py-0.5 rounded text-xs font-medium border border-blue-200">
+                <ShieldCheck className="w-3.5 h-3.5" />
+                本人確認済
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 bg-gray-50 text-gray-500 px-2 py-0.5 rounded text-xs font-medium border border-gray-200">
+                <ShieldAlert className="w-3.5 h-3.5" />
+                本人未確認
+              </span>
+            )}
+          </div>
         </div>
         <div className="flex flex-wrap gap-3">
           {!isOwner && session?.user?.id && (
@@ -113,7 +127,7 @@ export default async function PublicProfilePage({ params }: PageProps) {
           <div className="flex flex-col gap-4 md:flex-row md:items-center">
             <Image
               src={user.image || '/images/default-avatar.svg'}
-              alt={user.name || user.username}
+              alt={user.name || user.username || 'ユーザー'}
               width={120}
               height={120}
               className="h-24 w-24 rounded-full object-cover"

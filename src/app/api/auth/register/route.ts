@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
     }
 
     // ユーザー名の重複チェック
-    const existingUserByUsername = await prisma.user.findUnique({
+    const existingUserByUsername = await prisma.user.findFirst({
       where: { username }
     })
 

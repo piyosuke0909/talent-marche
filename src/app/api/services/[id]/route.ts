@@ -25,7 +25,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
             name: true,
             image: true,
             bio: true,
-            isVerified: true,
+            identityVerified: true,
             createdAt: true,
           }
         },
@@ -113,7 +113,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         name: service.user.name,
         image: service.user.image,
         bio: service.user.bio,
-        isVerified: service.user.isVerified,
+        identityVerified: service.user.identityVerified,
         createdAt: service.user.createdAt.toISOString(),
       },
       category: {

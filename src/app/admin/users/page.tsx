@@ -3,6 +3,7 @@
 
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import Link from 'next/link'
 import { Loader2, AlertCircle, Ban, CheckCircle, Search, Shield, ShieldAlert, User } from 'lucide-react'
 import Image from 'next/image'
 
@@ -215,9 +216,11 @@ function AdminUsersContent() {
                                             )}
 
                                             {user.identityVerified ? (
-                                                <button onClick={() => handleAction(user.id, 'unverify')} className="text-orange-600 hover:text-orange-900 text-xs border border-orange-200 px-2 py-1 rounded">確認取消</button>
+                                                <span className="inline-flex items-center text-xs text-blue-700 bg-blue-100 px-2 py-1 rounded-full w-fit">本人確認済</span>
                                             ) : (
-                                                <button onClick={() => handleAction(user.id, 'verify')} className="text-blue-600 hover:text-blue-900 text-xs border border-blue-200 px-2 py-1 rounded">本人確認</button>
+                                                <Link href="/admin/identity-verification" className="inline-flex items-center text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full w-fit hover:bg-gray-200">
+                                                    未確認 → 審査へ
+                                                </Link>
                                             )}
                                         </div>
                                     </td>

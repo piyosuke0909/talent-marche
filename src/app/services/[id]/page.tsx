@@ -1,10 +1,11 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Star, Heart, Clock, User, MessageCircle } from 'lucide-react'
+import { Star, Clock, User, MessageCircle, ShieldCheck, ShieldAlert } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import NegotiationButton from '@/components/services/NegotiationButton'
 import MobileActionBar from '@/components/services/MobileActionBar'
+import FavoriteButton from '@/components/FavoriteButton'
 import { prisma } from '@/lib/db'
 import { getServerAuthSession } from '@/lib/auth'
 import type { ServiceDetail, ServiceReviewSummary } from '@/types'
@@ -29,7 +30,7 @@ async function getService(id: string): Promise<ServiceDetail | null> {
           name: true,
           image: true,
           bio: true,
-          isVerified: true,
+          identityVerified: true,
           createdAt: true,
         }
       },
@@ -99,7 +100,7 @@ async function getService(id: string): Promise<ServiceDetail | null> {
       name: service.user.name,
       image: service.user.image,
       bio: service.user.bio,
-      isVerified: service.user.isVerified,
+      identityVerified: service.user.identityVerified,
       createdAt: service.user.createdAt.toISOString(),
     },
     category: {
@@ -239,7 +240,7 @@ export default async function ServicePage({ params }: ServicePageProps) {
                           {review.reviewer.image ? (
                             <Image
                               src={review.reviewer.image}
-                              alt={review.reviewer.name || review.reviewer.username}
+                              alt={review.reviewer.name || review.reviewer.username || 'ユーザー'}
                               width={40}
                               height={40}
                               className="h-10 w-10 rounded-full object-cover"
@@ -289,11 +290,11 @@ export default async function ServicePage({ params }: ServicePageProps) {
             <div className="bg-white dark:bg-gray-900 rounded-lg shadow-md p-6 mb-6 transition-colors duration-200">
               <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">販売者情報</h3>
               <div className="flex items-center space-x-3 mb-4">
-                <div className="flex-shrink-0">
+                <Link href={`/users/${service.user.id}`} className="flex-shrink-0 hover:opacity-80 transition-opacity">
                   {service.user.image ? (
                     <Image
                       src={service.user.image}
-                      alt={service.user.name || service.user.username}
+                      alt={service.user.name || service.user.username || 'ユーザー'}
                       width={48}
                       height={48}
                       className="h-12 w-12 rounded-full object-cover"
@@ -304,17 +305,25 @@ export default async function ServicePage({ params }: ServicePageProps) {
                       <User className="w-8 h-8 text-gray-600 dark:text-gray-400" />
                     </div>
                   )}
-                </div>
+                </Link>
                 <div>
-                  <div className="flex items-center space-x-2">
-                    <span className="font-medium text-gray-900 dark:text-white">
+                  <div className="flex flex-col">
+                    <Link href={`/users/${service.user.id}`} className="font-medium text-gray-900 dark:text-white hover:underline">
                       {service.user.name || service.user.username}
-                    </span>
-                    {service.user.isVerified && (
-                      <svg className="w-5 h-5 text-blue-500 fill-current" viewBox="0 0 20 20">
-                        <path d="M10 18l-8-5 8-8 8 8-8 5z" />
-                      </svg>
-                    )}
+                    </Link>
+                    <div className="mt-1">
+                      {service.user.identityVerified ? (
+                        <span className="inline-flex items-center gap-1 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded text-xs font-medium border border-blue-200 dark:border-blue-800">
+                          <ShieldCheck className="w-3.5 h-3.5" />
+                          本人確認済
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 px-2 py-0.5 rounded text-xs font-medium border border-gray-200 dark:border-gray-700">
+                          <ShieldAlert className="w-3.5 h-3.5" />
+                          本人未確認
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <span className="text-sm text-gray-500 dark:text-gray-400">@{service.user.username}</span>
                 </div>
@@ -363,15 +372,21 @@ export default async function ServicePage({ params }: ServicePageProps) {
                     />
                   </>
                 ) : (
-                  <div className="text-center py-4 text-gray-500 dark:text-gray-400">
-                    これはあなたのサービスです
+                  <div className="space-y-2">
+                    <Link href={`/services/${service.id}/edit`}>
+                      <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">
+                        編集する
+                      </Button>
+                    </Link>
+                    <p className="text-center text-xs text-gray-400 dark:text-gray-500 mt-2">これはあなたのサービスです</p>
                   </div>
                 )}
 
-                <button className="w-full flex items-center justify-center space-x-2 text-gray-600 dark:text-gray-400 hover:text-red-500 dark:hover:text-red-400 py-2">
-                  <Heart className="w-4 h-4" />
-                  <span>お気に入りに追加</span>
-                </button>
+                <FavoriteButton 
+                  serviceId={service.id} 
+                  showText={true}
+                  className="w-full flex items-center justify-center border border-gray-200 dark:border-gray-700 py-4 hover:border-red-200 dark:hover:border-red-900/50"
+                />
               </div>
             </div>
           </div>

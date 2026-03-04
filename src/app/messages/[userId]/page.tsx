@@ -285,7 +285,7 @@ export default function ConversationPage() {
               {partner ? (
                 <Image
                   src={partner.image || '/images/default-avatar.svg'}
-                  alt={partner.name || partner.username}
+                  alt={partner.name || partner.username || 'ユーザー'}
                   width={56}
                   height={56}
                   className="h-14 w-14 rounded-full object-cover"
@@ -425,7 +425,7 @@ export default function ConversationPage() {
               <div className="flex items-center gap-3">
                 <Image
                   src={partner.image || '/images/default-avatar.svg'}
-                  alt={partner.name || partner.username}
+                  alt={partner.name || partner.username || 'ユーザー'}
                   width={48}
                   height={48}
                   className="h-12 w-12 rounded-full object-cover"

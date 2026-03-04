@@ -130,7 +130,7 @@ export default function FavoritesPage() {
                   <div className="flex items-center mb-2">
                     <Image
                       src={service.user.image || '/images/default-avatar.svg'}
-                      alt={service.user.name || service.user.username}
+                      alt={service.user.name || service.user.username || 'ユーザー'}
                       width={24}
                       height={24}
                       className="mr-2 h-6 w-6 rounded-full object-cover"

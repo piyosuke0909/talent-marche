@@ -10,6 +10,7 @@ import { prisma } from "@/lib/db"
 import bcrypt from "bcryptjs"
 
 export const authOptions = {
+  debug: true,
   adapter: PrismaAdapter(prisma),
   providers: [
     GoogleProvider({
@@ -86,28 +87,43 @@ export const authOptions = {
     signUp: "/auth/signup",
   },
   callbacks: {
-    async signIn({ user, account }: { user: User; account: any }) {
+    async signIn({ user, account, profile }: { user: User; account: any; profile?: any }) {
+      console.log('--- SIGN IN CALLBACK TRIGGERED ---')
+      console.log('Provider:', account?.provider)
+      console.log('User Email:', user?.email)
+      console.log('User Profile:', JSON.stringify(profile, null, 2))
+      
       if (account?.provider === 'google' || account?.provider === 'github') {
         if (user.email) {
           try {
-            // Check if user exists first to avoid update error on first sign-in
+            console.log('Checking if user exists for email:', user.email)
             const existingUser = await prisma.user.findUnique({
               where: { email: user.email }
             })
 
+            const defaultUsername = user.email.split('@')[0]
+
             if (existingUser) {
+              console.log('User exists, updating profile...')
               await prisma.user.update({
                 where: { email: user.email },
                 data: {
                   image: user.image,
-                  name: user.name
+                  name: user.name,
+                  ...(existingUser.username ? {} : { username: defaultUsername })
                 }
               })
+              console.log('Update successful')
+            } else {
+               console.log('User does not exist, PrismaAdapter will create it.')
+               console.log('Assigning temporary username:', defaultUsername)
+               ;(user as any).username = defaultUsername
             }
           } catch (e) {
-            console.error("Failed to sync social profile", e)
-            // Do not return false here, allow sign in to proceed even if sync fails
+            console.error("Failed to sync social profile during OAuth:", e)
           }
+        } else {
+           console.log('NO EMAIL RETURNED FROM OAUTH')
         }
       }
       return true

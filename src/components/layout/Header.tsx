@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
 import { useSession, signOut } from 'next-auth/react'
-import { Search, Menu, X, ChevronDown, User, Settings, LogOut, Wallet, Bell, Sparkles } from 'lucide-react'
+import { Search, Menu, X, ChevronDown, User, Settings, LogOut, Wallet, Bell, Sparkles, Shield } from 'lucide-react'
 
 // Notification Types
 interface NotificationItem {
@@ -50,8 +50,8 @@ export default function Header() {
           setNotifications(data.notifications)
           setUnreadCount(data.unreadCount)
         }
-      } catch (e) {
-        console.error(e)
+      } catch {
+        // Ignored. "Failed to fetch" usually happens during navigation or hot reloads.
       }
     }
 
@@ -170,7 +170,7 @@ export default function Header() {
             href="/requests"
             className={`${pathname === '/requests' ? 'text-blue-600 font-bold' : 'text-gray-600 hover:text-gray-900'} transition-colors`}
           >
-            依頼一覧
+            依頼する
           </Link>
           <Link
             href="/messages"
@@ -257,6 +257,14 @@ export default function Header() {
                       >
                         <User className="w-4 h-4 mr-3" />
                         プロフィール
+                      </Link>
+                      <Link
+                        href="/settings/identity-verification"
+                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                        onClick={() => setIsProfileDropdownOpen(false)}
+                      >
+                        <Shield className="w-4 h-4 mr-3" />
+                        本人確認
                       </Link>
                       <Link
                         href="/dashboard"
@@ -349,7 +357,7 @@ export default function Header() {
               href="/requests"
               className={`${pathname.startsWith('/requests') ? 'text-blue-600 font-bold' : 'text-gray-600 hover:text-gray-900'} transition-colors`}
             >
-              依頼をする
+              依頼一覧
             </Link>
             <Link
               href="/services"
@@ -416,7 +424,7 @@ export default function Header() {
                 出品する
               </Link>
               <Link href="/requests" onClick={() => setIsMobileMenuOpen(false)} className="block text-lg font-medium text-gray-800 dark:text-gray-200">
-                依頼一覧
+                依頼する
               </Link>
               <Link href="/services" onClick={() => setIsMobileMenuOpen(false)} className="block text-lg font-medium text-gray-800 dark:text-gray-200">
                 探す

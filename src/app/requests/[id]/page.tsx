@@ -8,14 +8,14 @@ import Link from 'next/link'
 import { formatDistanceToNow } from 'date-fns'
 import { ja } from 'date-fns/locale'
 import { useSession } from 'next-auth/react'
-import { Loader2, AlertCircle, Clock, MapPin, DollarSign, Send, CheckCircle, User as UserIcon } from 'lucide-react'
+import { Loader2, AlertCircle, Clock, MapPin, DollarSign, Send, CheckCircle, User as UserIcon, ShieldCheck, ShieldAlert } from 'lucide-react'
 
 interface User {
     id: string
     name: string
     image: string | null
     bio: string | null
-    isVerified: boolean
+    identityVerified: boolean
     createdAt: string
 }
 
@@ -423,10 +423,15 @@ function RequestDetailContent({ params }: { params: Promise<{ id: string }> }) {
                                 <Link href={`/profile/${request.user.id}`} className="font-bold text-lg hover:underline block">
                                     {request.user.name}
                                 </Link>
-                                {request.user.isVerified && (
-                                    <span className="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full inline-flex items-center mt-1">
-                                        <CheckCircle className="w-3 h-3 mr-1" />
-                                        本人確認済み
+                                {request.user.identityVerified ? (
+                                    <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 px-2 py-0.5 rounded text-xs font-medium border border-blue-200 mt-1">
+                                        <ShieldCheck className="w-3.5 h-3.5" />
+                                        本人確認済
+                                    </span>
+                                ) : (
+                                    <span className="inline-flex items-center gap-1 bg-gray-50 text-gray-500 px-2 py-0.5 rounded text-xs font-medium border border-gray-200 mt-1">
+                                        <ShieldAlert className="w-3.5 h-3.5" />
+                                        本人未確認
                                     </span>
                                 )}
                             </div>

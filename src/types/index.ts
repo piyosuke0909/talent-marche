@@ -57,7 +57,7 @@ export type ReviewWithRelations = Review & {
 
 export interface ServiceUserSummary {
   id: string
-  username: string
+  username: string | null
   name: string | null
   image: string | null
 }
@@ -107,7 +107,7 @@ export interface ServiceDetail extends ServiceListItem {
   updatedAt: string
   user: ServiceUserSummary & {
     bio: string | null
-    isVerified: boolean
+    identityVerified: boolean
     createdAt: string
   }
   reviews: ServiceReviewSummary[]

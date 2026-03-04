@@ -254,7 +254,7 @@ function NewMessageContent() {
                     >
                       <Image
                         src={user.image || '/images/default-avatar.svg'}
-                        alt={user.name || user.username}
+                        alt={user.name || user.username || 'ユーザー'}
                         width={40}
                         height={40}
                         className="h-10 w-10 rounded-full object-cover"
@@ -279,7 +279,7 @@ function NewMessageContent() {
             <div className="flex items-center gap-4 rounded-2xl border border-blue-200 bg-blue-50 p-4">
               <Image
                 src={recipient.image || '/images/default-avatar.svg'}
-                alt={recipient.name || recipient.username}
+                alt={recipient.name || recipient.username || 'ユーザー'}
                 width={56}
                 height={56}
                 className="h-14 w-14 rounded-full object-cover"
@@ -356,7 +356,7 @@ function NewMessageContent() {
                     >
                       <Image
                         src={user.image || '/images/default-avatar.svg'}
-                        alt={user.name || user.username}
+                        alt={user.name || user.username || 'ユーザー'}
                         width={40}
                         height={40}
                         className="h-10 w-10 rounded-full object-cover"

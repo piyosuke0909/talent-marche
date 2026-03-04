@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { Loader2, Camera, Save } from 'lucide-react'
@@ -129,6 +130,21 @@ export default function ProfileSettingsPage() {
     return (
         <div className="container mx-auto max-w-2xl px-4 py-8">
             <h1 className="mb-8 text-3xl font-bold text-gray-900">プロフィール設定</h1>
+
+            <div className="mb-6 flex items-center justify-between rounded-lg border border-blue-100 bg-blue-50 p-4">
+                <div>
+                    <h2 className="text-sm font-bold text-blue-900">本人確認</h2>
+                    <p className="text-xs text-blue-700 mt-1">
+                        本人確認を完了すると、プロフィールに「本人確認済」バッジが表示され、信頼性が向上します。
+                    </p>
+                </div>
+                <Link
+                    href="/settings/identity-verification"
+                    className="shrink-0 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition"
+                >
+                    確認書類を提出
+                </Link>
+            </div>
 
             {message && (
                 <div className={`mb-6 rounded-lg p-4 text-sm font-medium ${message.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
