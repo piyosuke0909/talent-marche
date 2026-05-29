@@ -75,7 +75,7 @@ export default function MarcheChatWidget() {
     }
 
     return (
-        <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
+        <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
             {/* Chat Window */}
             {isOpen && (
                 <div className="mb-4 w-80 md:w-96 h-96 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden animate-in slide-in-from-bottom-10 fade-in duration-300">
@@ -165,16 +165,31 @@ export default function MarcheChatWidget() {
                 </div>
             )}
 
-            {/* Toggle Button */}
-            <button
-                onClick={() => setIsOpen(!isOpen)}
-                className={`p-4 rounded-full shadow-lg transition-all duration-300 hover:scale-110 ${isOpen
-                    ? 'bg-gray-600 text-white rotate-90'
-                    : 'bg-sky-400 hover:bg-sky-500 text-white'
-                    }`}
-            >
-                {isOpen ? <X className="w-6 h-6" /> : <MessageCircle className="w-6 h-6" />}
-            </button>
+            {/* Buttons Row */}
+            <div className="flex items-center gap-3">
+                {/* Help Button */}
+                <a
+                    href="/help"
+                    className="flex items-center gap-1.5 px-4 py-3 bg-white text-gray-700 rounded-full shadow-lg border border-gray-200 hover:bg-gray-50 hover:scale-105 transition-all duration-200 text-sm font-medium"
+                    title="ヘルプ"
+                >
+                    <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    ヘルプ
+                </a>
+
+                {/* Chat Toggle Button */}
+                <button
+                    onClick={() => setIsOpen(!isOpen)}
+                    className={`p-4 rounded-full shadow-lg transition-all duration-300 hover:scale-110 ${isOpen
+                        ? 'bg-gray-600 text-white rotate-90'
+                        : 'bg-sky-400 hover:bg-sky-500 text-white'
+                        }`}
+                >
+                    {isOpen ? <X className="w-6 h-6" /> : <MessageCircle className="w-6 h-6" />}
+                </button>
+            </div>
         </div>
     )
 }

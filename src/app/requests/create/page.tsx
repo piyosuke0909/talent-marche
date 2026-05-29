@@ -17,6 +17,7 @@ export default function CreateRequestPage() {
     images: [] as string[]
   })
   const [titleCount, setTitleCount] = useState(0)
+  const [descCount, setDescCount] = useState(0)
 
   interface Category {
     id: string
@@ -39,9 +40,17 @@ export default function CreateRequestPage() {
 
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value
-    if (value.length <= 80) {
+    if (value.length <= 20) {
       setFormData({ ...formData, title: value })
       setTitleCount(value.length)
+    }
+  }
+
+  const handleDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const value = e.target.value
+    if (value.length <= 800) {
+      setFormData({ ...formData, description: value })
+      setDescCount(value.length)
     }
   }
 
@@ -119,8 +128,8 @@ export default function CreateRequestPage() {
                   className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                 />
-                <span className="absolute right-4 top-3 text-sm text-gray-500">
-                  {titleCount}/80
+                <span className={`absolute right-4 top-3 text-sm ${titleCount >= 20 ? 'text-red-500 font-medium' : 'text-gray-500'}`}>
+                  {titleCount}/20
                 </span>
               </div>
             </div>
@@ -163,13 +172,18 @@ export default function CreateRequestPage() {
             </div>
 
             <div className="bg-white p-6 rounded-lg shadow-md mb-5">
-              <div className="flex items-center mb-4">
-                <label className="font-bold mr-2">依頼概要</label>
-                <span className="bg-red-600 text-white text-xs px-2 py-1 rounded">必須</span>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center">
+                  <label className="font-bold mr-2">依頼概要</label>
+                  <span className="bg-red-600 text-white text-xs px-2 py-1 rounded">必須</span>
+                </div>
+                <span className={`text-sm ${descCount >= 800 ? 'text-red-500 font-medium' : 'text-gray-500'}`}>
+                  {descCount}/800
+                </span>
               </div>
               <textarea
                 value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                onChange={handleDescriptionChange}
                 placeholder="依頼概要を記入してください"
                 rows={8}
                 className="w-full p-3 border border-gray-300 rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"

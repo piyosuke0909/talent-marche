@@ -167,8 +167,8 @@ export default function Header() {
             出品する
           </Link>
           <Link
-            href="/requests"
-            className={`${pathname === '/requests' ? 'text-blue-600 font-bold' : 'text-gray-600 hover:text-gray-900'} transition-colors`}
+            href="/requests/create"
+            className={`${pathname === '/requests/create' ? 'text-blue-600 font-bold' : 'text-gray-600 hover:text-gray-900'} transition-colors`}
           >
             依頼する
           </Link>
@@ -339,7 +339,7 @@ export default function Header() {
 
       {/* Sub Navigation */}
       <div className="bg-white border-t">
-        <div className="container mx-auto px-4 py-3 flex flex-wrap justify-between items-center text-sm md:text-base">
+        <div className="container mx-auto px-6 py-3 flex flex-wrap justify-between items-center text-sm md:text-base">
           <div className="flex flex-wrap gap-4 md:space-x-8">
             <Link
               href="/categories"
@@ -354,16 +354,16 @@ export default function Header() {
               お気に入りから探す
             </Link>
             <Link
+              href="/services"
+              className={`${pathname.startsWith('/services') ? 'text-blue-600 font-bold' : 'text-gray-600 hover:text-gray-900'} transition-colors`}
+            >
+              サービス一覧
+            </Link>
+            <Link
               href="/requests"
               className={`${pathname.startsWith('/requests') ? 'text-blue-600 font-bold' : 'text-gray-600 hover:text-gray-900'} transition-colors`}
             >
               依頼一覧
-            </Link>
-            <Link
-              href="/services"
-              className={`${pathname.startsWith('/services') ? 'text-blue-600 font-bold' : 'text-gray-600 hover:text-gray-900'} transition-colors`}
-            >
-              コンテンツを探す
             </Link>
 
             <Link
@@ -423,7 +423,7 @@ export default function Header() {
               <Link href="/services/create" onClick={() => setIsMobileMenuOpen(false)} className="block text-lg font-medium text-gray-800 dark:text-gray-200">
                 出品する
               </Link>
-              <Link href="/requests" onClick={() => setIsMobileMenuOpen(false)} className="block text-lg font-medium text-gray-800 dark:text-gray-200">
+              <Link href="/requests/create" onClick={() => setIsMobileMenuOpen(false)} className="block text-lg font-medium text-gray-800 dark:text-gray-200">
                 依頼する
               </Link>
               <Link href="/services" onClick={() => setIsMobileMenuOpen(false)} className="block text-lg font-medium text-gray-800 dark:text-gray-200">

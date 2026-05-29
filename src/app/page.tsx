@@ -6,6 +6,7 @@ import { prisma } from '@/lib/db'
 import FavoriteButton from '@/components/FavoriteButton'
 
 async function getRecommendedServices() {
+  // スコアでソートするため、多めに取得してJS側でソート
   const services = await prisma.service.findMany({
     where: { isActive: true },
     include: {
@@ -37,21 +38,28 @@ async function getRecommendedServices() {
         }
       }
     },
-    orderBy: { createdAt: 'desc' },
-    take: 4,
+    take: 100,
   })
 
-  return services.map(service => {
-    const averageRating = service.reviews.length > 0
-      ? service.reviews.reduce((sum, review) => sum + review.rating, 0) / service.reviews.length
-      : 0
+  return services
+    .map(service => {
+      const averageRating = service.reviews.length > 0
+        ? service.reviews.reduce((sum, review) => sum + review.rating, 0) / service.reviews.length
+        : 0
+      // 注文数 + お気に入り数 でスコア計算
+      const score = service._count.orders + service._count.favorites
 
-    return {
-      ...service,
-      averageRating: Math.round(averageRating * 10) / 10,
-      reviews: undefined,
-    }
-  })
+      return {
+        ...service,
+        averageRating: Math.round(averageRating * 10) / 10,
+        score,
+        reviews: undefined,
+      }
+    })
+    // スコア降順（同スコアは新着順）
+    .sort((a, b) => b.score - a.score || b.createdAt.getTime() - a.createdAt.getTime())
+    .slice(0, 4)
+    .map(({ score, ...rest }) => rest)
 }
 
 async function getCategories() {
@@ -84,9 +92,9 @@ export default async function HomePage() {
       </section>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-6 py-12">
         {/* Featured Content */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
           <div className="relative h-64 rounded-lg shadow-md overflow-hidden">
             <Image
               src="https://images.unsplash.com/photo-1552664730-d307ca884978?w=800&h=400&fit=crop"
@@ -128,7 +136,7 @@ export default async function HomePage() {
         </div>
 
         {/* Recommended Services */}
-        <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">あなたにおすすめ</h2>
+        <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">あなたにおすすめ</h2>
         <div className="grid grid-cols-1 gap-6">
           {services.map((service) => (
             <div key={service.id} className="bg-white dark:bg-gray-900 p-4 rounded-lg shadow-md flex items-center space-x-4 transition-colors duration-200">
@@ -187,7 +195,7 @@ export default async function HomePage() {
         </div>
 
         {/* Categories Section */}
-        <section className="bg-gray-100 dark:bg-gray-950 -mx-4 px-4 py-16 mt-8 transition-colors duration-200">
+        <section className="bg-gray-100 dark:bg-gray-950 -mx-6 px-6 py-16 mt-16 transition-colors duration-200">
           <div className="container mx-auto">
             <h2 className="text-3xl font-bold mb-8 text-center text-gray-800 dark:text-white">カテゴリから探す</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

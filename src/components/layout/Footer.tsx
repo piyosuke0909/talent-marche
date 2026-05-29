@@ -2,8 +2,8 @@ import Link from 'next/link'
 
 export default function Footer() {
   return (
-    <footer className="bg-white border-t">
-      <div className="container mx-auto px-4 py-6 text-sm text-gray-600">
+    <footer className="bg-white border-t mt-8">
+      <div className="container mx-auto px-6 py-8 text-sm text-gray-600">
         <div className="flex flex-wrap gap-4 justify-between items-center">
           <div>© 2025 Talent Marche</div>
           <div className="flex gap-4">

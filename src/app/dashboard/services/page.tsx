@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Plus, Edit2, Trash2, Eye, EyeOff, Loader2, AlertCircle } from 'lucide-react'
+import { Plus, Edit2, Trash2, Eye, EyeOff, Loader2, AlertCircle, Package, Heart } from 'lucide-react'
 
 interface Service {
     id: string
@@ -50,7 +50,7 @@ export default function MyServicesPage() {
     }
 
     const handleDelete = async (id: string) => {
-        if (!confirm('本当に削除しますか？\n（削除すると元に戻せませんが、データ上は「非公開」として残ります）')) return
+        if (!confirm('本当に削除しますか？\nこの操作は元に戻せません。')) return
 
         try {
             const res = await fetch(`/api/services/${id}`, {
@@ -58,10 +58,8 @@ export default function MyServicesPage() {
             })
             if (!res.ok) throw new Error('Delete failed')
 
-            // UI update: remove or mark inactive?
-            // API DELETE sets isActive=false. 
-            // We should probably just refresh or update local state.
-            fetchServices()
+            // Remove from local state immediately
+            setServices(prev => prev.filter(s => s.id !== id))
         } catch (err) {
             alert('削除に失敗しました')
         }
@@ -171,8 +169,8 @@ export default function MyServicesPage() {
                                         </button>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        <div title="注文数">📦 {service._count.orders}</div>
-                                        <div title="お気に入り数">❤️ {service._count.favorites}</div>
+                                        <div className="flex items-center gap-1" title="注文数"><Package className="w-4 h-4 text-gray-400" /> {service._count.orders}</div>
+                                        <div className="flex items-center gap-1" title="お気に入り数"><Heart className="w-4 h-4 text-red-400" /> {service._count.favorites}</div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <div className="flex justify-end space-x-3">

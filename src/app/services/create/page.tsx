@@ -22,12 +22,14 @@ export default function CreateServicePage() {
     tags: [] as string[]
   })
   const [titleCount, setTitleCount] = useState(0)
+  const [descCount, setDescCount] = useState(0)
   const [categories, setCategories] = useState<Category[]>([])
   const [images, setImages] = useState<File[]>([])
   const [imagePreviews, setImagePreviews] = useState<string[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
   const [showPayoutModal, setShowPayoutModal] = useState(false)
+  const [serviceLimitReached, setServiceLimitReached] = useState(false)
   const { data: session } = useSession() // We need session for user ID (path construction)
 
   useEffect(() => {
@@ -48,6 +50,16 @@ export default function CreateServicePage() {
             setShowPayoutModal(true)
           }
         }
+
+        // 出品数チェック（上限5件）
+        const myServicesRes = await fetch('/api/services/my')
+        if (myServicesRes.ok) {
+          const data = await myServicesRes.json()
+          const activeCount = (data.services || []).filter((s: { isActive: boolean }) => s.isActive).length
+          if (activeCount >= 5) {
+            setServiceLimitReached(true)
+          }
+        }
       } catch (error) {
         console.error('Failed to fetch initial data:', error)
       }
@@ -58,9 +70,17 @@ export default function CreateServicePage() {
 
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value
-    if (value.length <= 80) {
+    if (value.length <= 20) {
       setFormData({ ...formData, title: value })
       setTitleCount(value.length)
+    }
+  }
+
+  const handleDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const value = e.target.value
+    if (value.length <= 800) {
+      setFormData({ ...formData, description: value })
+      setDescCount(value.length)
     }
   }
 
@@ -143,6 +163,16 @@ export default function CreateServicePage() {
       <main className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-6 text-gray-800 text-center">出品内容の投稿</h1>
         <div className="max-w-2xl mx-auto">
+          {serviceLimitReached && (
+            <div className="bg-amber-50 border border-amber-300 rounded-lg p-5 mb-6 text-center">
+              <p className="text-amber-800 font-semibold mb-1">出品上限に達しています</p>
+              <p className="text-amber-700 text-sm">出品できるサービスは最大5件までです。</p>
+              <p className="text-amber-700 text-sm mb-4">既存のサービスを削除してから再度お試しください。</p>
+              <a href="/dashboard/services" className="inline-flex items-center px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors text-sm font-medium">
+                出品管理へ
+              </a>
+            </div>
+          )}
           {!showConfirm ? (
             <form onSubmit={handleConfirm}>
               <div className="bg-white p-6 rounded-lg shadow-md mb-5">
@@ -159,8 +189,8 @@ export default function CreateServicePage() {
                     className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     required
                   />
-                  <span className="absolute right-4 top-3 text-sm text-gray-500">
-                    {titleCount}/80
+                  <span className={`absolute right-4 top-3 text-sm ${titleCount >= 20 ? 'text-red-500 font-medium' : 'text-gray-500'}`}>
+                    {titleCount}/20
                   </span>
                 </div>
               </div>
@@ -203,13 +233,18 @@ export default function CreateServicePage() {
               </div>
 
               <div className="bg-white p-6 rounded-lg shadow-md mb-5">
-                <div className="flex items-center mb-4">
-                  <label className="font-bold mr-2">出品概要</label>
-                  <span className="bg-red-600 text-white text-xs px-2 py-1 rounded">必須</span>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center">
+                    <label className="font-bold mr-2">出品概要</label>
+                    <span className="bg-red-600 text-white text-xs px-2 py-1 rounded">必須</span>
+                  </div>
+                  <span className={`text-sm ${descCount >= 800 ? 'text-red-500 font-medium' : 'text-gray-500'}`}>
+                    {descCount}/800
+                  </span>
                 </div>
                 <textarea
                   value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  onChange={handleDescriptionChange}
                   placeholder="出品概要を記入してください"
                   rows={8}
                   className="w-full p-3 border border-gray-300 rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -297,7 +332,8 @@ export default function CreateServicePage() {
               <div className="text-center my-16">
                 <button
                   type="submit"
-                  className="w-full p-5 bg-black text-white text-xl font-bold rounded-lg shadow-md hover:bg-gray-800 transition-colors"
+                  disabled={serviceLimitReached}
+                  className="w-full p-5 bg-black text-white text-xl font-bold rounded-lg shadow-md hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   確認画面に進む
                 </button>

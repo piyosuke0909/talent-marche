@@ -261,10 +261,9 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       )
     }
 
-    // 論理削除（isActive = false）
-    await prisma.service.update({
-      where: { id },
-      data: { isActive: false }
+    // 物理削除
+    await prisma.service.delete({
+      where: { id }
     })
 
     return NextResponse.json({

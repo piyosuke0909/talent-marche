@@ -350,16 +350,19 @@ export default async function ServicePage({ params }: ServicePageProps) {
                 </div>
               </div>
 
-              <div className="space-y-3">
+              <div className="flex flex-col gap-4">
                 {!isOwner ? (
                   <>
-                    <Link href={`/checkout?serviceId=${service.id}`}>
-                      <Button className="w-full bg-green-600 hover:bg-green-700 text-white">
+                    <Link href={`/checkout?serviceId=${service.id}`} className="block">
+                      <Button className="w-full py-3 rounded-lg bg-green-600 hover:bg-green-700 text-white font-semibold">
                         注文する
                       </Button>
                     </Link>
-                    <Link href={`/messages/new?userId=${service.userId}`}>
-                      <Button variant="outline" className="w-full dark:bg-gray-800 dark:text-white dark:border-gray-700 dark:hover:bg-gray-700">
+                    <Link href={`/messages/new?userId=${service.userId}`} className="block">
+                      <Button
+                        variant="outline"
+                        className="w-full py-3 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:hover:bg-gray-700"
+                      >
                         <MessageCircle className="w-4 h-4 mr-2" />
                         質問する
                       </Button>
@@ -372,21 +375,24 @@ export default async function ServicePage({ params }: ServicePageProps) {
                     />
                   </>
                 ) : (
-                  <div className="space-y-2">
+                  <div className="flex flex-col gap-3">
                     <Link href={`/services/${service.id}/edit`}>
-                      <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">
+                      <Button className="w-full py-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold">
                         編集する
                       </Button>
                     </Link>
-                    <p className="text-center text-xs text-gray-400 dark:text-gray-500 mt-2">これはあなたのサービスです</p>
+                    <p className="text-center text-xs text-gray-400 dark:text-gray-500">これはあなたのサービスです</p>
                   </div>
                 )}
 
-                <FavoriteButton 
-                  serviceId={service.id} 
-                  showText={true}
-                  className="w-full flex items-center justify-center border border-gray-200 dark:border-gray-700 py-4 hover:border-red-200 dark:hover:border-red-900/50"
-                />
+                {/* 区切り線 → お気に入りボタンを同じ枠スタイルで統一 */}
+                <div className="border-t border-gray-100 dark:border-gray-800 pt-2">
+                  <FavoriteButton
+                    serviceId={service.id}
+                    showText={true}
+                    className="w-full flex items-center justify-center border border-gray-200 dark:border-gray-700 py-3 rounded-lg hover:border-red-300 hover:bg-red-50 dark:hover:border-red-900/50 dark:hover:bg-red-900/10 transition-colors"
+                  />
+                </div>
               </div>
             </div>
           </div>

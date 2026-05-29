@@ -187,6 +187,17 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // 出品数上限チェック（最大5件）
+    const existingCount = await prisma.service.count({
+      where: { userId: session.user.id, isActive: true }
+    })
+    if (existingCount >= 5) {
+      return NextResponse.json(
+        { error: "出品できるサービスは最大5件までです。既存のサービスを削除してから再度お試しください。" },
+        { status: 400 }
+      )
+    }
+
     // カテゴリの存在確認
     const category = await prisma.category.findUnique({
       where: { id: categoryId }

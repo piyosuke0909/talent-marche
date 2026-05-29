@@ -233,7 +233,7 @@ function DashboardPageContent() {
                         unoptimized
                       />
                       <div>
-                        <h4 className="font-medium text-gray-900 dark:text-white">{order.service.title}</h4>
+                        <h4 className="font-medium text-gray-900 dark:text-white">{order.service.title.length > 20 ? order.service.title.slice(0, 20) + '...' : order.service.title}</h4>
                         <p className="text-sm text-gray-600 dark:text-gray-400">{order.buyer.name}</p>
                       </div>
                     </div>
@@ -308,7 +308,7 @@ function DashboardPageContent() {
                         )}
                       </div>
                       <div className="flex-1">
-                        <h4 className="font-medium text-gray-900 dark:text-white mb-1">{service.title}</h4>
+                        <h4 className="font-medium text-gray-900 dark:text-white mb-1">{service.title.length > 20 ? service.title.slice(0, 20) + '...' : service.title}</h4>
                         <div className="flex items-center justify-between">
                           <p className="text-sm text-gray-600 dark:text-gray-400">¥{service.price.toLocaleString()}</p>
                           <p className="text-sm text-gray-500 dark:text-gray-500">{service.orderCount}件の注文</p>
