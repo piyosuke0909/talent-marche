@@ -181,7 +181,7 @@ export default function EditServicePage() {
       });
 
       if (response.ok) {
-        router.push(`/services/${serviceId}`);
+        router.push(`/dashboard/services`);
       } else {
         const data = await response.json();
         setError(data.error || "サービスの更新に失敗しました");
@@ -226,11 +226,11 @@ export default function EditServicePage() {
       <main className="container mx-auto px-4 py-8">
         <div className="mb-6">
           <Link
-            href={`/services/${serviceId}`}
+            href="/dashboard/services"
             className="inline-flex items-center text-blue-600 hover:text-blue-700 text-sm"
           >
             <ArrowLeft className="w-4 h-4 mr-1" />
-            サービス詳細に戻る
+            サービス管理に戻る
           </Link>
         </div>
 

@@ -90,23 +90,20 @@ export default function Header() {
   }, [])
 
   const handleNotificationClick = async (n: NotificationItem) => {
-    if (!n.isRead) {
-      // Mark as read
-      await fetch('/api/notifications', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: n.id })
-      })
-      setNotifications(prev => prev.map(item => item.id === n.id ? { ...item, isRead: true } : item))
-      setUnreadCount(prev => Math.max(0, prev - 1))
-    }
+    await fetch('/api/notifications', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: n.id })
+    })
+    setNotifications(prev => prev.filter(item => item.id !== n.id))
+    setUnreadCount(prev => Math.max(0, prev - 1))
     setIsNotificationOpen(false)
     if (n.link) router.push(n.link)
   }
 
   const markAllAsRead = async () => {
     await fetch('/api/notifications', { method: 'PUT', body: '{}' })
-    setNotifications(prev => prev.map(item => ({ ...item, isRead: true })))
+    setNotifications([])
     setUnreadCount(0)
   }
 
@@ -201,11 +198,19 @@ export default function Header() {
                   <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl border border-gray-200 z-50 max-h-[80vh] flex flex-col">
                     <div className="p-3 border-b flex justify-between items-center bg-gray-50 rounded-t-lg">
                       <h3 className="font-semibold text-gray-700">お知らせ</h3>
-                      <button onClick={markAllAsRead} className="text-xs text-blue-600 hover:underline">既読にする</button>
+                      <div className="flex items-center gap-3">
+                        <button onClick={markAllAsRead} className="text-xs text-blue-600 hover:underline">すべて既読</button>
+                        <Link href="/notifications" onClick={() => setIsNotificationOpen(false)} className="text-xs text-gray-500 hover:underline">履歴を見る</Link>
+                      </div>
                     </div>
                     <div className="overflow-y-auto flex-1">
                       {notifications.length === 0 ? (
-                        <div className="p-8 text-center text-gray-500 text-sm">通知はありません</div>
+                        <div className="p-8 text-center text-gray-500 text-sm">
+                          未読のお知らせはありません
+                          <div className="mt-2">
+                            <Link href="/notifications" onClick={() => setIsNotificationOpen(false)} className="text-xs text-blue-500 hover:underline">履歴を見る</Link>
+                          </div>
+                        </div>
                       ) : (
                         notifications.map(n => (
                           <div
@@ -281,6 +286,14 @@ export default function Header() {
                       >
                         <Sparkles className="w-4 h-4 mr-3" />
                         出品・サービス管理
+                      </Link>
+                      <Link
+                        href="/dashboard/requests"
+                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                        onClick={() => setIsProfileDropdownOpen(false)}
+                      >
+                        <Settings className="w-4 h-4 mr-3" />
+                        依頼管理
                       </Link>
                       {sessionUser.role === 'ADMIN' && (
                         <Link
