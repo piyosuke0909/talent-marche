@@ -4,6 +4,29 @@ import { Star } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { prisma } from '@/lib/db'
 import FavoriteButton from '@/components/FavoriteButton'
+import type { SvgIconProps } from '@mui/material'
+import PaletteOutlined from '@mui/icons-material/PaletteOutlined'
+import CodeOutlined from '@mui/icons-material/CodeOutlined'
+import BrushOutlined from '@mui/icons-material/BrushOutlined'
+import CreateOutlined from '@mui/icons-material/CreateOutlined'
+import TrendingUpOutlined from '@mui/icons-material/TrendingUpOutlined'
+import MovieOutlined from '@mui/icons-material/MovieOutlined'
+import AnalyticsOutlined from '@mui/icons-material/AnalyticsOutlined'
+import TranslateOutlined from '@mui/icons-material/TranslateOutlined'
+import CategoryOutlined from '@mui/icons-material/CategoryOutlined'
+
+type IconComponent = React.ComponentType<SvgIconProps>
+
+const categoryIconMap: Record<string, { Icon: IconComponent; color: string; bg: string }> = {
+  'web-design':     { Icon: PaletteOutlined,   color: '#3b82f6', bg: 'bg-blue-100' },
+  'programming':    { Icon: CodeOutlined,       color: '#10b981', bg: 'bg-green-100' },
+  'graphic-design': { Icon: BrushOutlined,      color: '#8b5cf6', bg: 'bg-purple-100' },
+  'writing':        { Icon: CreateOutlined,     color: '#f59e0b', bg: 'bg-yellow-100' },
+  'marketing':      { Icon: TrendingUpOutlined, color: '#ef4444', bg: 'bg-red-100' },
+  'video-audio':    { Icon: MovieOutlined,      color: '#ec4899', bg: 'bg-pink-100' },
+  'data':           { Icon: AnalyticsOutlined,  color: '#06b6d4', bg: 'bg-cyan-100' },
+  'translation':    { Icon: TranslateOutlined,  color: '#6366f1', bg: 'bg-indigo-100' },
+}
 
 async function getRecommendedServices() {
   // スコアでソートするため、多めに取得してJS側でソート
@@ -199,37 +222,26 @@ export default async function HomePage() {
           <div className="container mx-auto">
             <h2 className="text-3xl font-bold mb-8 text-center text-gray-800 dark:text-white">カテゴリから探す</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {categories.map((category, index) => (
-                <Link key={category.id} href={`/categories/${category.slug}`}>
-                  <div className="bg-white dark:bg-gray-900 p-6 rounded-lg shadow hover:shadow-md transition-all cursor-pointer">
-                    <div className="flex items-center mb-4">
-                      <div className={`w-12 h-12 rounded-lg flex items-center justify-center mr-4 ${index % 6 === 0 ? 'bg-blue-100 dark:bg-blue-900/30' :
-                          index % 6 === 1 ? 'bg-green-100 dark:bg-green-900/30' :
-                            index % 6 === 2 ? 'bg-purple-100 dark:bg-purple-900/30' :
-                              index % 6 === 3 ? 'bg-red-100 dark:bg-red-900/30' :
-                                index % 6 === 4 ? 'bg-yellow-100 dark:bg-yellow-900/30' :
-                                  'bg-indigo-100 dark:bg-indigo-900/30'
-                        }`}>
-                        {category.icon ? (
-                          <span className="text-2xl">{category.icon}</span>
-                        ) : (
-                          <svg className={`w-6 h-6 ${index % 6 === 0 ? 'text-blue-600 dark:text-blue-400' :
-                              index % 6 === 1 ? 'text-green-600 dark:text-green-400' :
-                                index % 6 === 2 ? 'text-purple-600 dark:text-purple-400' :
-                                  index % 6 === 3 ? 'text-red-600 dark:text-red-400' :
-                                    index % 6 === 4 ? 'text-yellow-600 dark:text-yellow-400' :
-                                      'text-indigo-600 dark:text-indigo-400'
-                            }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                          </svg>
-                        )}
+              {categories.map((category) => {
+                const mapped = categoryIconMap[category.slug]
+                const Icon = mapped?.Icon ?? CategoryOutlined
+                const color = mapped?.color ?? '#6b7280'
+                const bg = mapped?.bg ?? 'bg-gray-100'
+
+                return (
+                  <Link key={category.id} href={`/categories/${category.slug}`}>
+                    <div className="bg-white dark:bg-gray-900 p-6 rounded-lg shadow hover:shadow-md transition-all cursor-pointer">
+                      <div className="flex items-center mb-4">
+                        <div className={`w-12 h-12 rounded-lg flex items-center justify-center mr-4 ${bg} dark:bg-opacity-20`}>
+                          <Icon sx={{ fontSize: 24, color }} />
+                        </div>
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{category.name}</h3>
                       </div>
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{category.name}</h3>
+                      <p className="text-gray-600 dark:text-gray-300 text-sm">{category.description || 'カテゴリの詳細はこちら'}</p>
                     </div>
-                    <p className="text-gray-600 dark:text-gray-300 text-sm">{category.description || 'カテゴリの詳細はこちら'}</p>
-                  </div>
-                </Link>
-              ))}
+                  </Link>
+                )
+              })}
             </div>
           </div>
         </section>
