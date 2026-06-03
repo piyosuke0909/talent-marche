@@ -1,3 +1,6 @@
+// 型定義ファイル: API レスポンスやコンポーネント間で共有する TypeScript 型をまとめる
+// Prisma が生成した DB モデルの型を拡張して、フロント向けの形に整形した型を定義する
+
 import type {
   User,
   Service,

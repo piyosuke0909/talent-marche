@@ -1,3 +1,6 @@
+// ルートレイアウト: 全ページ共通のHTMLラッパー・Header・Footer・ChatWidgetを配置する
+// Next.js の App Router では layout.tsx が全ページに自動適用される
+
 import { Suspense } from 'react'
 import type { Metadata } from "next";
 import NextSessionProvider from '@/components/providers/SessionProvider'

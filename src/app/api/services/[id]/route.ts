@@ -1,3 +1,5 @@
+// サービス詳細API: 1件取得（GET）・更新（PUT）・物理削除（DELETE）処理
+
 import { NextRequest, NextResponse } from "next/server"
 import { getServerAuthSession } from "@/lib/auth"
 import { prisma } from "@/lib/db"
@@ -9,6 +11,7 @@ interface RouteParams {
   }>
 }
 
+// サービス詳細取得処理: 公開中なら誰でも取得可能、非公開は所有者のみ
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const { id } = await params
@@ -150,6 +153,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   }
 }
 
+// サービス更新処理: 所有者のみ編集可能（タイトル・価格・公開状態 等）
 export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
     const session = await getServerAuthSession()
@@ -229,6 +233,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
   }
 }
 
+// サービス物理削除処理: 所有者のみ削除可能（DB から完全に削除）
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
     const session = await getServerAuthSession()

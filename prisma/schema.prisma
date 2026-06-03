@@ -1,63 +1,68 @@
+// Prisma スキーマ定義: MongoDB のデータ構造（テーブル設計）をすべて定義するファイル
+
+// Prisma クライアント生成設定
 generator client {
   provider = "prisma-client-js"
 }
 
+// データソース設定: MongoDB に接続（接続URLは環境変数から取得）
 datasource db {
   provider = "mongodb"
   url      = env("DATABASE_URL")
 }
 
+// ユーザーモデル: アプリの全ユーザー情報を管理
 model User {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  email     String   @unique
-  emailVerified DateTime?
-  username  String?
-  password  String?
-  name      String?
-  image     String?
-  bio       String?
-  website   String?
-  location  String?
-  skills    String[]
-  isVerified Boolean @default(false)
-  role       String  @default("USER") // USER, ADMIN
-  isBanned   Boolean @default(false)
-  identityVerified Boolean @default(false)
-  payjpTenantId String? // PAY.JP Tenant ID
-  balance    Int     @default(0)
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId // MongoDB の ObjectId を主キーに使用
+  email     String   @unique          // メールアドレス（一意）
+  emailVerified DateTime?             // メール認証日時（未認証は null）
+  username  String?                   // ユーザーネーム（任意）
+  password  String?                   // ハッシュ化されたパスワード（OAuthユーザーは null）
+  name      String?                   // 表示名
+  image     String?                   // プロフィール画像（Base64 または URL）
+  bio       String?                   // 自己紹介文
+  website   String?                   // ウェブサイトURL
+  location  String?                   // 活動場所
+  skills    String[]                  // スキルタグ一覧
+  isVerified Boolean @default(false)  // メール認証済みフラグ
+  role       String  @default("USER") // 権限: USER（一般）または ADMIN（管理者）
+  isBanned   Boolean @default(false)  // BANフラグ（禁止ユーザー）
+  identityVerified Boolean @default(false) // 本人確認済みフラグ
+  payjpTenantId String?               // PAY.JP のテナントID（出品者の振込先管理用）
+  balance    Int     @default(0)      // ウォレット残高（円）
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Relations
-  accounts    Account[]
-  sessions    Session[]
-  services    Service[]
-  orders      Order[]
-  sentOrders  Order[]     @relation("OrderBuyer")
-  messages    Message[]
-  sentMessages Message[]  @relation("MessageSender")
-  reviews     Review[]
-  givenReviews Review[]   @relation("ReviewGiver")
-  requests    Request[]
-  proposals   Proposal[]
-  favorites   Favorite[]
-  payouts     Payout[]
+  // リレーション定義（他モデルとの関連）
+  accounts    Account[]               // OAuth アカウント連携（Google・GitHub 等）
+  sessions    Session[]               // セッション情報
+  services    Service[]               // 出品したサービス一覧
+  orders      Order[]                 // 受注した注文（売り手として）
+  sentOrders  Order[]     @relation("OrderBuyer")  // 発注した注文（買い手として）
+  messages    Message[]               // 受信したメッセージ
+  sentMessages Message[]  @relation("MessageSender") // 送信したメッセージ
+  reviews     Review[]               // 受け取ったレビュー
+  givenReviews Review[]   @relation("ReviewGiver") // 書いたレビュー
+  requests    Request[]              // 投稿した依頼
+  proposals   Proposal[]             // 送った提案
+  favorites   Favorite[]             // お気に入り登録
+  payouts     Payout[]               // 振込申請履歴
+  notifications Notification[]       // 通知履歴
+  negotiations PriceNegotiation[]    // 価格交渉履歴
+  identityVerifications IdentityVerification[] // 本人確認申請
 
-  notifications Notification[]
-  negotiations PriceNegotiation[]
-  identityVerifications IdentityVerification[]
-
-  @@map("users")
+  @@map("users") // MongoDB のコレクション名
 }
 
+// 通知モデル: ユーザーへのシステム通知を管理
 model Notification {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId    String   @db.ObjectId
-  type      String   @default("INFO") // INFO, SUCCESS, WARNING, ERROR, ORDER, MESSAGE
-  title     String
-  message   String
-  link      String?
-  isRead    Boolean  @default(false)
+  userId    String   @db.ObjectId          // 通知の受信者
+  type      String   @default("INFO")      // 種類: INFO/SUCCESS/WARNING/ERROR/ORDER/MESSAGE
+  title     String                         // 通知タイトル
+  message   String                         // 通知本文
+  link      String?                        // クリック時の遷移先URL（任意）
+  isRead    Boolean  @default(false)       // 既読フラグ
   createdAt DateTime @default(now())
 
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -65,12 +70,13 @@ model Notification {
   @@map("notifications")
 }
 
+// OAuth アカウントモデル: Google・GitHub 等のソーシャルログイン情報を管理
 model Account {
   id                String  @id @default(auto()) @map("_id") @db.ObjectId
   userId            String  @db.ObjectId
-  type              String
-  provider          String
-  providerAccountId String
+  type              String                  // oauth / credentials 等
+  provider          String                  // google / github / twitter 等
+  providerAccountId String                  // 各プロバイダーのアカウントID
   refresh_token     String?
   access_token      String?
   expires_at        Int?
@@ -81,169 +87,172 @@ model Account {
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([provider, providerAccountId])
+  @@unique([provider, providerAccountId]) // 同一プロバイダー・アカウントの重複を防止
   @@map("accounts")
 }
 
+// セッションモデル: NextAuth のセッション情報を管理（JWT 方式では使用しない）
 model Session {
   id           String   @id @default(auto()) @map("_id") @db.ObjectId
   sessionToken String   @unique
   userId       String   @db.ObjectId
-  expires      DateTime
+  expires      DateTime // セッション有効期限
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("sessions")
 }
 
+// メール認証トークンモデル: パスワードリセット等のワンタイムトークンを管理
 model VerificationToken {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  identifier String
-  token      String   @unique
-  expires    DateTime
+  identifier String                // メールアドレス等の識別子
+  token      String   @unique      // ランダム生成されたトークン
+  expires    DateTime              // トークン有効期限
 
   @@unique([identifier, token])
   @@map("verificationtokens")
 }
 
+// 振込申請モデル: 出品者の売上振込申請を管理
 model Payout {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  amount    Int
-  status    String   @default("PENDING") // PENDING, PROCESSED, FAILED
-  bankInfo  String
+  amount    Int                          // 振込申請金額（円）
+  status    String   @default("PENDING") // 状態: PENDING/PROCESSED/FAILED
+  bankInfo  String                       // 振込先口座情報
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Relations
   userId    String   @db.ObjectId
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("payouts")
 }
 
+// カテゴリモデル: サービス・依頼の分類を管理
 model Category {
   id          String    @id @default(auto()) @map("_id") @db.ObjectId
-  name        String    @unique
-  description String?
-  icon        String?
-  slug        String    @unique
+  name        String    @unique           // カテゴリ名（例: Webデザイン）
+  description String?                    // カテゴリの説明
+  icon        String?                    // アイコン名
+  slug        String    @unique          // URL用スラッグ（例: web-design）
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
-  services Service[]
-  requests Request[]
+  services Service[]   // このカテゴリに属するサービス
+  requests Request[]   // このカテゴリに属する依頼
 
   @@map("categories")
 }
 
+// サービスモデル: 出品者が提供するサービスを管理
 model Service {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  title       String
-  description String
-  price       Int
-  deliveryDays Int
-  images      String[]
-  tags        String[]
-  isActive    Boolean  @default(true)
+  title       String                     // サービスタイトル（最大20文字）
+  description String                     // サービス説明（最大800文字）
+  price       Int                        // 価格（円）
+  deliveryDays Int                       // 納品日数
+  images      String[]                   // サービス画像（Base64）
+  tags        String[]                   // 検索用タグ
+  isActive    Boolean  @default(true)    // 公開フラグ（false=非公開）
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  // Relations
-  userId     String   @db.ObjectId
-  categoryId String   @db.ObjectId
+  userId     String   @db.ObjectId       // 出品者のユーザーID
+  categoryId String   @db.ObjectId       // カテゴリID
   user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   category   Category  @relation(fields: [categoryId], references: [id])
-  orders     Order[]
-  reviews    Review[]
-
-  favorites  Favorite[]
-  negotiations PriceNegotiation[]
+  orders     Order[]                     // このサービスへの注文一覧
+  reviews    Review[]                    // レビュー一覧
+  favorites  Favorite[]                  // お気に入り登録一覧
+  negotiations PriceNegotiation[]        // 価格交渉一覧
 
   @@map("services")
 }
 
+// 依頼モデル: 買い手が仕事を募集する依頼を管理
 model Request {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  title       String
-  description String
-  budget      Int?
-  deadline    DateTime?
-  skills      String[]
-  images      String[]
-  location    String?
-  isActive    Boolean  @default(true)
+  title       String                     // 依頼タイトル（最大20文字）
+  description String                     // 依頼概要（最大800文字）
+  budget      Int?                       // 予算（円、任意）
+  deadline    DateTime?                  // 希望納品日（任意）
+  skills      String[]                   // 求めるスキル一覧
+  images      String[]                   // 参考画像（Base64）
+  location    String?                    // 募集期間・場所（任意）
+  isActive    Boolean  @default(true)    // 公開フラグ
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  // Relations
-  userId     String   @db.ObjectId
-  categoryId String   @db.ObjectId
+  userId     String   @db.ObjectId       // 依頼者のユーザーID
+  categoryId String   @db.ObjectId       // カテゴリID
   user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   category   Category   @relation(fields: [categoryId], references: [id])
-  proposals  Proposal[]
+  proposals  Proposal[] // この依頼に届いた提案一覧
 
   @@map("requests")
 }
 
+// 提案モデル: 出品者が依頼に対して送る提案を管理
 model Proposal {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  message     String
-  price       Int
-  deliveryDays Int
+  message     String                     // 提案メッセージ
+  price       Int                        // 提示価格（円）
+  deliveryDays Int                       // 納品可能日数
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  // Relations
-  requestId String   @db.ObjectId
-  userId    String   @db.ObjectId
+  requestId String   @db.ObjectId        // 対象の依頼ID
+  userId    String   @db.ObjectId        // 提案者のユーザーID
   request   Request @relation(fields: [requestId], references: [id], onDelete: Cascade)
   user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([requestId, userId])
+  @@unique([requestId, userId]) // 1ユーザーが同一依頼に複数提案できないよう制限
   @@map("proposals")
 }
 
+// 注文ステータスの列挙型
 enum OrderStatus {
-  PENDING
-  IN_PROGRESS
-  COMPLETED
-  CANCELLED
-  DISPUTED
+  PENDING     // 支払い待ち
+  IN_PROGRESS // 作業中
+  COMPLETED   // 完了
+  CANCELLED   // キャンセル
+  DISPUTED    // トラブル対応中
 }
 
+// 注文モデル: サービスの購入・取引を管理
 model Order {
   id          String      @id @default(auto()) @map("_id") @db.ObjectId
-  status      OrderStatus @default(PENDING)
-  totalAmount Int
-  paymentId   String? // PAY.JP Charge ID
-  isTenantPayment Boolean @default(false)
-  message     String?
-  deadline    DateTime?
+  status      OrderStatus @default(PENDING) // 注文ステータス
+  totalAmount Int                           // 合計金額（円）
+  paymentId   String?                       // PAY.JP の決済ID（Charge ID）
+  isTenantPayment Boolean @default(false)   // テナント決済フラグ（出品者の口座へ直接振込）
+  message     String?                       // 注文時のメッセージ
+  deadline    DateTime?                     // 納品期限
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
 
-  // Relations
-  serviceId String?     @db.ObjectId
-  sellerId  String      @db.ObjectId
-  buyerId   String      @db.ObjectId
+  serviceId String?     @db.ObjectId        // 対象サービスID
+  sellerId  String      @db.ObjectId        // 出品者（売り手）のユーザーID
+  buyerId   String      @db.ObjectId        // 購入者（買い手）のユーザーID
   service   Service? @relation(fields: [serviceId], references: [id])
   seller    User     @relation(fields: [sellerId], references: [id])
   buyer     User     @relation("OrderBuyer", fields: [buyerId], references: [id])
-  messages  Message[]
-  reviews   Review[]
+  messages  Message[]                       // 注文内のメッセージ履歴
+  reviews   Review[]                        // 注文完了後のレビュー
 
   @@map("orders")
 }
 
+// メッセージモデル: ユーザー間・注文内のチャットメッセージを管理
 model Message {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  content   String
-  isRead    Boolean  @default(false)
+  content   String                         // メッセージ本文
+  isRead    Boolean  @default(false)       // 既読フラグ
   createdAt DateTime @default(now())
 
-  // Relations
-  orderId    String?  @db.ObjectId
-  senderId   String   @db.ObjectId
-  receiverId String   @db.ObjectId
+  orderId    String?  @db.ObjectId         // 紐づく注文ID（注文外DMは null）
+  senderId   String   @db.ObjectId         // 送信者のユーザーID
+  receiverId String   @db.ObjectId         // 受信者のユーザーID
   order      Order? @relation(fields: [orderId], references: [id])
   sender     User   @relation("MessageSender", fields: [senderId], references: [id])
   receiver   User   @relation(fields: [receiverId], references: [id])
@@ -251,77 +260,79 @@ model Message {
   @@map("messages")
 }
 
+// レビューモデル: 注文完了後の評価・口コミを管理
 model Review {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  rating    Int
-  comment   String?
+  rating    Int                            // 評価（1〜5の整数）
+  comment   String?                        // コメント（任意）
   createdAt DateTime @default(now())
 
-  // Relations
-  orderId     String?  @db.ObjectId
-  serviceId   String?  @db.ObjectId
-  reviewerId  String   @db.ObjectId
-  revieweeId  String   @db.ObjectId
+  orderId     String?  @db.ObjectId        // 紐づく注文ID
+  serviceId   String?  @db.ObjectId        // 対象サービスID
+  reviewerId  String   @db.ObjectId        // レビューを書いたユーザーID
+  revieweeId  String   @db.ObjectId        // レビューを受けたユーザーID
   order       Order?   @relation(fields: [orderId], references: [id])
   service     Service? @relation(fields: [serviceId], references: [id])
   reviewer    User     @relation("ReviewGiver", fields: [reviewerId], references: [id])
   reviewee    User     @relation(fields: [revieweeId], references: [id])
 
-  @@unique([orderId, reviewerId])
+  @@unique([orderId, reviewerId]) // 1注文につき1レビューのみ投稿可能
   @@map("reviews")
 }
 
+// お気に入りモデル: ユーザーがサービスをお気に入り登録した情報を管理
 model Favorite {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   createdAt DateTime @default(now())
 
-  // Relations
-  userId    String   @db.ObjectId
-  serviceId String   @db.ObjectId
+  userId    String   @db.ObjectId          // お気に入り登録したユーザーID
+  serviceId String   @db.ObjectId          // お気に入り登録されたサービスID
   user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   service   Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, serviceId])
+  @@unique([userId, serviceId]) // 同一サービスを重複登録できないよう制限
   @@map("favorites")
 }
 
+// お問い合わせモデル: コンタクトフォームからの問い合わせを管理
 model Inquiry {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  name      String
-  email     String
-  subject   String
-  message   String
-  status    String   @default("PENDING") // PENDING, RESOLVED
+  name      String                         // 問い合わせ者名
+  email     String                         // 返信先メールアドレス
+  subject   String                         // 件名
+  message   String                         // 問い合わせ内容
+  status    String   @default("PENDING")   // 対応状態: PENDING/RESOLVED
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@map("inquiries")
 }
 
+// 価格交渉モデル: 買い手がサービス価格の値引き交渉を行う情報を管理
 model PriceNegotiation {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  price     Int
-  status    String   @default("PENDING") // PENDING, ACCEPTED, REJECTED
+  price     Int                            // 買い手が提示した希望価格（円）
+  status    String   @default("PENDING")   // 状態: PENDING/ACCEPTED/REJECTED
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Relations
-  serviceId String   @db.ObjectId
-  userId    String   @db.ObjectId // Buyer
+  serviceId String   @db.ObjectId          // 対象サービスID
+  userId    String   @db.ObjectId          // 交渉を申し込んだ買い手のユーザーID
   service   Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([serviceId, userId])
+  @@unique([serviceId, userId]) // 1サービスに対して1ユーザー1件まで
   @@map("price_negotiations")
 }
 
+// 本人確認モデル: 運転免許証・パスポート等による本人確認申請を管理
 model IdentityVerification {
   id            String   @id @default(auto()) @map("_id") @db.ObjectId
   userId        String   @db.ObjectId
-  documentImage String   // Base64 encoded image
-  documentType  String   // drivers_license, passport, my_number_card
-  status        String   @default("PENDING") // PENDING, APPROVED, REJECTED
-  adminNote     String?  // Admin comment (used for rejection reason)
+  documentImage String                       // 本人確認書類の画像（Base64）
+  documentType  String                       // 書類種別: drivers_license/passport/my_number_card
+  status        String   @default("PENDING") // 審査状態: PENDING/APPROVED/REJECTED
+  adminNote     String?                      // 管理者コメント（却下理由等）
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 

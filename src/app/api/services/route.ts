@@ -1,3 +1,5 @@
+// サービスAPI: サービス一覧取得（GET）・サービス作成（POST）処理
+
 import { NextRequest, NextResponse } from "next/server"
 import { Prisma } from "@prisma/client"
 import { getServerAuthSession } from "@/lib/auth"
@@ -5,29 +7,28 @@ import { prisma } from "@/lib/db"
 
 import type { ServiceListItem, ServicesResponse } from "@/types"
 
+// ソートオプションの定義
 const SORT_OPTIONS = ['recent', 'popular', 'price_low', 'price_high', 'rating'] as const
 type SortOption = typeof SORT_OPTIONS[number]
 
+// ソートオプションを Prisma の orderBy 形式に変換する処理
 function buildServiceSort(sortBy: SortOption): Prisma.ServiceOrderByWithRelationInput | Prisma.ServiceOrderByWithRelationInput[] {
   switch (sortBy) {
-    case 'price_low':
-      return [{ price: 'asc' }, { createdAt: 'desc' }]
-    case 'price_high':
-      return [{ price: 'desc' }, { createdAt: 'desc' }]
-    case 'popular':
-      return [{ orders: { _count: 'desc' } }, { createdAt: 'desc' }]
+    case 'price_low':  return [{ price: 'asc' },  { createdAt: 'desc' }]          // 価格の安い順
+    case 'price_high': return [{ price: 'desc' }, { createdAt: 'desc' }]           // 価格の高い順
+    case 'popular':    return [{ orders: { _count: 'desc' } }, { createdAt: 'desc' }] // 注文数順
     case 'rating':
-      // Prisma doesn't support sorting by average aggregation directly in orderBy yet.
-      // Fallback to sorting by review count for now.
+      // Prisma は平均値での orderBy 未対応のためレビュー件数順で代替
       return [{ reviews: { _count: 'desc' } }, { createdAt: 'desc' }]
-    default:
-      return [{ createdAt: 'desc' }]
+    default:           return [{ createdAt: 'desc' }]                              // 新着順
   }
 }
 
 
+// サービス一覧取得処理: 検索・カテゴリー・価格フィルター + ページネーション対応
 export async function GET(request: NextRequest) {
   try {
+    // ページネーション・フィルターパラメータ取得処理
     const { searchParams } = new URL(request.url)
     const page = parseInt(searchParams.get("page") || "1")
     const limit = parseInt(searchParams.get("limit") || "10")

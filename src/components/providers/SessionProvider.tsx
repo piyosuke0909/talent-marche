@@ -1,3 +1,6 @@
+// セッションプロバイダー: NextAuth のセッション情報を全コンポーネントに提供するラッパー
+// layout.tsx から呼ばれ、useSession() フックが子コンポーネントで使えるようになる
+
 'use client'
 
 import { SessionProvider } from 'next-auth/react'
